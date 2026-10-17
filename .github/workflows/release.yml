@@ -37,7 +37,8 @@ jobs:
         with:
           node-version: "24"
       - name: Test release selection
-        run: node --test scripts/*.test.mjs
+        # YAML validation uses the project's installed Node dependencies.
+        run: npm ci --ignore-scripts && node --test scripts/*.test.mjs
       - name: Resolve the existing version tag
         id: target
         env:
