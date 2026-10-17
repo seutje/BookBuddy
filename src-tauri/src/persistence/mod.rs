@@ -1,5 +1,6 @@
 //! SQLite access stays in this module, including connection configuration.
 pub mod books;
+pub mod custom_fields;
 pub mod household;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use sqlx::SqlitePool;

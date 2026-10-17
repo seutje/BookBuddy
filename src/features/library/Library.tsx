@@ -12,6 +12,7 @@ import type { Person } from "../../lib/api";
 import { errorMessage } from "../../lib/api";
 import { BookForm } from "../books/BookForm";
 import { BookDetail } from "../books/BookDetail";
+import { CustomFilters } from "../custom-fields/CustomFilters";
 
 function FilterSelect<T extends string>({
   label,
@@ -61,6 +62,7 @@ export function Library({ current }: { current: Person | undefined }) {
     listStatus: { mode: "any" },
     owned: { mode: "any" },
     sort: "recently_added",
+    customFilters: [],
   });
   const [adding, setAdding] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -225,6 +227,12 @@ export function Library({ current }: { current: Person | undefined }) {
                 </select>
               </label>
             </div>
+            <CustomFilters
+              filters={filter.customFilters}
+              onChange={(customFilters) =>
+                setFilter({ ...filter, customFilters })
+              }
+            />
           </details>
           {query.error ? (
             <p role="alert">{errorMessage(query.error)}</p>
@@ -244,7 +252,7 @@ export function Library({ current }: { current: Person | undefined }) {
                 {`${query.data.length} ${query.data.length === 1 ? "book" : "books"}`}
               </p>
               <ul className="book-list">
-                {query.data.map(({ book, memberships }) => (
+                {query.data.map(({ book, memberships, rowFields }) => (
                   <li key={book.id}>
                     <div>
                       <button
@@ -280,6 +288,13 @@ export function Library({ current }: { current: Person | undefined }) {
                             </li>
                           ))}
                       </ul>
+                      {rowFields.map((field, index) => (
+                        <p className="muted" key={`${field.fieldId}-${index}`}>
+                          {field.personName ? `${field.personName} · ` : ""}
+                          {field.label}:{" "}
+                          {field.display === "" ? "Empty text" : field.display}
+                        </p>
+                      ))}
                     </div>
                     {current && (
                       <button

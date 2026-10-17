@@ -12,6 +12,7 @@ import type { Person } from "../../lib/api";
 import { errorMessage } from "../../lib/api";
 import { BookForm } from "./BookForm";
 import { PersonalForm } from "./PersonalForm";
+import { CustomFields } from "../custom-fields/CustomFields";
 
 type Action =
   | { type: "shared"; draft: BookDraft }
@@ -123,6 +124,7 @@ export function BookDetail({
               </button>
             </>
           )}
+          <CustomFields target={{ scope: "book", bookId: id }} />
           <section className="personal-panel">
             <h2>
               {current
@@ -151,6 +153,13 @@ export function BookDetail({
                     onSave={(draft) =>
                       action.mutateAsync({ type: "personal", draft })
                     }
+                  />
+                  <CustomFields
+                    target={{
+                      scope: "person_book",
+                      bookId: id,
+                      personId: current.id,
+                    }}
                   />
                 </>
               ) : (

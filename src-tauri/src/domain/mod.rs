@@ -1,5 +1,6 @@
 //! Domain types and validation, independent of the presentation layer.
 pub mod books;
+pub mod custom_fields;
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]

@@ -50,6 +50,16 @@ function Select-Person([string]$Name) {
     Click 'Current person'
     Click "View $Name"
 }
+
+function Toggle-Checkbox([string]$Name) {
+    $element = Wait-Element $Name ([System.Windows.Automation.ControlType]::CheckBox)
+    $element.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Toggle()
+}
+
+function Assert-Pressed([string]$Name) {
+    $element = Wait-Element $Name ([System.Windows.Automation.ControlType]::Button)
+    if ($element.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Current.ToggleState -ne [System.Windows.Automation.ToggleState]::On) { throw "Expected selection is not active: $Name" }
+}
 function Open-App {
     $script:application = Start-Process -FilePath $executable -WindowStyle Hidden -PassThru
 }

@@ -17,6 +17,13 @@
     "allow-ensure-person-book",
     "allow-update-person-book",
     "allow-mark-read",
-    "allow-duplicate-book-hints"
+    "allow-duplicate-book-hints",
+    "allow-list-custom-fields",
+    "allow-create-custom-field",
+    "allow-preview-custom-field-change",
+    "allow-update-custom-field",
+    "allow-reorder-custom-fields",
+    "allow-get-custom-values",
+    "allow-set-custom-value"
   ]
 }

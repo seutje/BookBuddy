@@ -1,0 +1,78 @@
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName UIAutomationClient
+Add-Type -AssemblyName UIAutomationTypes
+$env:BOOKBUDDY_TEST_RUN = [Guid]::NewGuid().ToString()
+$env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = '--force-renderer-accessibility --proxy-server=http://127.0.0.1:9 --proxy-bypass-list=localhost;*.localhost;127.0.0.1'
+$executable = (Resolve-Path "$PSScriptRoot/../src-tauri/target/debug/bookbuddy.exe").Path
+$script:application = $null
+. "$PSScriptRoot/ui-automation.ps1"
+function Set-Text([string]$Label, [string]$Value) {
+    $edit = Wait-Element $Label ([System.Windows.Automation.ControlType]::Edit)
+    $edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($Value)
+}
+try {
+    Open-App
+    $null = Wait-Element 'Welcome to BookBuddy'
+    Name-Entry 'Smoke Reader Alpha'
+    Click 'Create person'
+    Click 'Add book'
+    Set-Text 'Title' 'Book before attribute'
+    Click 'Save book'
+    Click 'Settings'
+    Click 'Add attribute'
+    Set-Text 'Attribute name' 'Recommend?'
+    Click 'Display-only default: Yes'
+    Toggle-Checkbox 'Show in Library rows'
+    Click 'Create attribute'
+    $null = Wait-Element 'Edit Recommend?'
+    Click 'Library'
+    Click 'Book before attribute'
+    $null = Wait-Element 'Save Recommend?'
+    Assert-Pressed 'Recommend?: Unknown'
+    Click 'Recommend?: No'
+    Click 'Save Recommend?'
+    Click 'Back to Library'
+    Click 'Add book'
+    Set-Text 'Title' 'Book after attribute'
+    Click 'Save book'
+    $null = Wait-Element 'Save Recommend?'
+    Assert-Pressed 'Recommend?: Unknown'
+    Click 'Recommend?: Yes'
+    Click 'Save Recommend?'
+    Click 'Back to Library'
+    Click 'Filters and sort'
+    Toggle-Checkbox 'Filter by Recommend?'
+    $null = Wait-Element 'No books here yet'
+    Click 'Recommend? filter: Specific value'
+    $null = Wait-Element 'Book before attribute' ([System.Windows.Automation.ControlType]::Button)
+    $null = Wait-Element '1 book'
+    Click 'Recommend? filter value: Yes'
+    $null = Wait-Element 'Book after attribute' ([System.Windows.Automation.ControlType]::Button)
+    $null = Wait-Element '1 book'
+    Click 'Clear custom filters'
+    $null = Wait-Element '2 books'
+    Close-App
+    Open-App
+    Click 'Book before attribute'
+    Assert-Pressed 'Recommend?: No'
+    Click 'Settings'
+    Click 'Hide Recommend?'
+    $null = Wait-Element 'Attribute change review'
+    Click 'Confirm attribute change'
+    $null = Wait-Element 'Reactivate Recommend?'
+    Click 'Reactivate Recommend?'
+    Click 'Confirm attribute change'
+    $null = Wait-Element 'Hide Recommend?'
+    Click 'Edit Recommend?'
+    Set-Text 'Attribute name' 'Recommended?'
+    Click 'Review attribute changes'
+    Click 'Confirm attribute change'
+    $null = Wait-Element 'Edit Recommended?'
+    Click 'Library'
+    Click 'Book before attribute'
+    Assert-Pressed 'Recommended?: No'
+    Click 'Back to Library'
+    Click 'Book after attribute'
+    Assert-Pressed 'Recommended?: Yes'
+    Write-Output 'PASS: new attributes on old/new books, display-only defaults, Unknown/No/Yes, custom filters, stable rename, hide/reactivate and restart through Windows UI and IPC.'
+} finally { Close-App }

@@ -15,6 +15,13 @@ fn main() {
             "update_person_book",
             "mark_read",
             "duplicate_book_hints",
+            "list_custom_fields",
+            "create_custom_field",
+            "preview_custom_field_change",
+            "update_custom_field",
+            "reorder_custom_fields",
+            "get_custom_values",
+            "set_custom_value",
         ]),
     ))
     .expect("Tauri build configuration failed");

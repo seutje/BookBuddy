@@ -1,3 +1,4 @@
+use crate::domain::custom_fields::{canonical_value, resolve_filters, CustomMatch, Scope};
 use crate::domain::{books::*, AppError};
 use sqlx::{QueryBuilder, Sqlite, SqlitePool, Transaction};
 use std::collections::HashMap;
@@ -9,6 +10,21 @@ pub async fn all(pool: &SqlitePool) -> Result<Vec<BookDetail>, AppError> {
 pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<BookDetail>, AppError> {
     let mut transaction = pool.begin().await?;
     let mut query = QueryBuilder::<Sqlite>::new("SELECT b.* FROM book b WHERE 1 = 1");
+    let definitions = super::custom_fields::definitions_in(&mut transaction).await?;
+    let custom = resolve_filters(&definitions, &filter.custom_filters)?;
+    for (definition, filter) in custom
+        .iter()
+        .filter(|(definition, _)| definition.draft.scope == Scope::Book)
+    {
+        match &filter.condition {
+            CustomMatch::Unknown => {
+                query.push(" AND NOT EXISTS (SELECT 1 FROM book_custom_field_value cv WHERE cv.book_id = b.id AND cv.field_id = ").push_bind(&definition.id).push(")");
+            }
+            CustomMatch::Equals(value) => {
+                query.push(" AND EXISTS (SELECT 1 FROM book_custom_field_value cv WHERE cv.book_id = b.id AND cv.field_id = ").push_bind(&definition.id).push(" AND cv.value_json = ").push_bind(canonical_value(&definition.draft, value)?).push(")");
+            }
+        }
+    }
     match filter.owned {
         Filter::Any => {}
         Filter::Unknown => {
@@ -22,6 +38,9 @@ pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<Book
         || !matches!(filter.reading_status, Filter::Any)
         || !matches!(filter.rating, Filter::Any)
         || !matches!(filter.list_status, Filter::Any)
+        || custom
+            .iter()
+            .any(|(definition, _)| definition.draft.scope == Scope::PersonBook)
     {
         query.push(" AND EXISTS (SELECT 1 FROM person_book pb WHERE pb.book_id = b.id");
         if let Some(person) = &filter.person_id {
@@ -54,6 +73,19 @@ pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<Book
                 query.push(" AND pb.list_status = ").push_bind(value);
             }
         }
+        for (definition, filter) in custom
+            .iter()
+            .filter(|(definition, _)| definition.draft.scope == Scope::PersonBook)
+        {
+            match &filter.condition {
+                CustomMatch::Unknown => {
+                    query.push(" AND NOT EXISTS (SELECT 1 FROM person_book_custom_field_value cv WHERE cv.person_book_id = pb.id AND cv.field_id = ").push_bind(&definition.id).push(")");
+                }
+                CustomMatch::Equals(value) => {
+                    query.push(" AND EXISTS (SELECT 1 FROM person_book_custom_field_value cv WHERE cv.person_book_id = pb.id AND cv.field_id = ").push_bind(&definition.id).push(" AND cv.value_json = ").push_bind(canonical_value(&definition.draft, value)?).push(")");
+                }
+            }
+        }
         query.push(")");
     }
     query.push(" ORDER BY b.created_at DESC, b.id");
@@ -63,7 +95,6 @@ pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<Book
         .await?;
     let memberships = sqlx::query_as::<_, Membership>("SELECT pb.*, p.display_name AS person_name, p.archived_at FROM person_book pb JOIN person p ON p.id = pb.person_id ORDER BY p.created_at, p.id")
         .fetch_all(&mut *transaction).await?;
-    transaction.commit().await?;
     let mut grouped: HashMap<String, Vec<Membership>> = HashMap::new();
     for membership in memberships {
         grouped
@@ -71,13 +102,22 @@ pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<Book
             .or_default()
             .push(membership);
     }
-    Ok(books
+    let mut rows: Vec<BookDetail> = books
         .into_iter()
         .map(|book| {
             let memberships = grouped.remove(&book.id).unwrap_or_default();
-            BookDetail { book, memberships }
+            BookDetail {
+                book,
+                memberships,
+                row_fields: Vec::new(),
+                custom_search: Vec::new(),
+            }
         })
-        .collect())
+        .collect();
+    super::custom_fields::decorate(&mut transaction, &mut rows, filter.person_id.as_deref())
+        .await?;
+    transaction.commit().await?;
+    Ok(rows)
 }
 
 pub async fn get(pool: &SqlitePool, id: &str) -> Result<BookDetail, AppError> {
@@ -92,7 +132,12 @@ pub async fn get(pool: &SqlitePool, id: &str) -> Result<BookDetail, AppError> {
     let memberships = sqlx::query_as::<_, Membership>("SELECT pb.*, p.display_name AS person_name, p.archived_at FROM person_book pb JOIN person p ON p.id = pb.person_id WHERE pb.book_id = ? ORDER BY p.created_at, p.id")
         .bind(id).fetch_all(&mut *transaction).await?;
     transaction.commit().await?;
-    Ok(BookDetail { book, memberships })
+    Ok(BookDetail {
+        book,
+        memberships,
+        row_fields: Vec::new(),
+        custom_search: Vec::new(),
+    })
 }
 
 pub async fn require_book(

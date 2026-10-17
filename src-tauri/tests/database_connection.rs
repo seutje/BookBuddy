@@ -46,7 +46,7 @@ async fn database_is_local_migrated_and_survives_reopen() {
             .fetch_one(&reopened)
             .await
             .unwrap();
-    assert_eq!(migrations, 2);
+    assert_eq!(migrations, 3);
     reopened.close().await;
 }
 

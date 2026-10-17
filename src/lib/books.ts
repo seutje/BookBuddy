@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { CustomFilter, CustomDisplay } from "./custom-fields";
 
 export const readingChoices = [
   { value: "want_to_read", label: "Want to Read" },
@@ -57,6 +58,7 @@ export interface Membership extends PersonalDraft {
 export interface BookDetail {
   book: Book;
   memberships: Membership[];
+  rowFields: CustomDisplay[];
 }
 export type Filter<T> =
   { mode: "any" } | { mode: "unknown" } | { mode: "equals"; value: T };
@@ -68,6 +70,7 @@ export interface BookFilter {
   listStatus: Filter<ListStatus>;
   owned: Filter<boolean>;
   sort: "recently_added" | "title" | "author" | "rating";
+  customFilters: CustomFilter[];
 }
 export const emptyBook: BookDraft = {
   title: "",

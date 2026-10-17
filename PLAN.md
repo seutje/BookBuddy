@@ -1,6 +1,6 @@
 # BookBuddy — Implementation Plan
 
-**Status:** Phases 0–2 verified; Phase 3 next
+**Status:** Phases 0–3 verified; Phase 4 next
 **Target:** Offline-only Windows desktop (Rust + Tauri 2 + React + TypeScript + SQLite)  
 **Source of truth:** [DESIGN.md](DESIGN.md)  
 **Agent rules:** [AGENTS.md](AGENTS.md)
@@ -53,16 +53,18 @@ Phase 2 verification (2026-10-17): `npm run check` passed, including fourteen Ru
 
 ## Phase 3 — Extensible attributes (required foundation)
 
-- [ ] Migrate `custom_field_definition` plus book-scoped and person-book-scoped value storage.
-- [ ] Implement supported types: boolean, select with durable option IDs, number, date, text/multiline, rating.
-- [ ] Validate every custom value and its entity scope on the Rust side; reject invalid field or option IDs.
-- [ ] Add Settings field-definition create/edit/reorder/hide UI with readable shared/per-person scope selection.
-- [ ] Add field rendering and editing to book and per-person detail views; custom values remain optional.
-- [ ] Add search/filter for custom values including missing/Unknown distinctly from No, zero and empty string.
-- [ ] Support safe label/choice rename; provide impact preview for type changes, removal and destructive operations.
-- [ ] Test adding `Recommend?` **after** hundreds of person-book rows already exist; no table migration/bulk fill needed.
-- [ ] Test booleans (Unknown/No/Yes), cross-scope misuse, deleted or renamed options, field hide/reactivate and restart.
-- [ ] **Exit gate:** any existing and future per-person book can use a newly defined field and be filtered by it.
+- [x] Migrate `custom_field_definition` plus book-scoped and person-book-scoped value storage.
+- [x] Implement supported types: boolean, select with durable option IDs, number, date, text/multiline, rating.
+- [x] Validate every custom value and its entity scope on the Rust side; reject invalid field or option IDs.
+- [x] Add Settings field-definition create/edit/reorder/hide UI with readable shared/per-person scope selection.
+- [x] Add field rendering and editing to book and per-person detail views; custom values remain optional.
+- [x] Add search/filter for custom values including missing/Unknown distinctly from No, zero and empty string.
+- [x] Support safe label/choice rename; provide impact preview for type changes, removal and destructive operations.
+- [x] Test adding `Recommend?` **after** hundreds of person-book rows already exist; no table migration/bulk fill needed.
+- [x] Test booleans (Unknown/No/Yes), cross-scope misuse, deleted or renamed options, field hide/reactivate and restart.
+- [x] **Exit gate:** any existing and future per-person book can use a newly defined field and be filtered by it.
+
+Phase 3 verification (2026-10-17): `npm run check` passed, including twenty-two Rust tests. Added eight custom-field tests covering sparse availability after 300 memberships, all supported value kinds, SQL/Rust scope checks, Unknown/No/Yes/zero/empty text, option identity and retirement, hide/reactivate, stale previews, rollback of destructive changes, label collisions, reorder, unit-label preservation and tighter-range review. `scripts/smoke-fields.ps1` passed on Windows offline: old/new books, display-only defaults, boolean edits and filters, rename, hide/reactivate and restart. Removal is implemented as non-destructive hiding/choice retirement; no hard-delete command is exposed. Type changes and tighter validation require explicit impact confirmation; see ADR 0002.
 
 ## Phase 4 — Reading events and household activity
 

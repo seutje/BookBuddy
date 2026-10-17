@@ -144,20 +144,24 @@ pub async fn list(pool: &SqlitePool, filter: BookFilter) -> Result<Vec<BookDetai
                     .as_deref()
                     .is_some_and(|text| normalized(text).contains(&search))
             }) || detail
-                .memberships
+                .custom_search
                 .iter()
-                .filter(|membership| {
-                    filter
-                        .person_id
-                        .as_ref()
-                        .is_none_or(|id| id == &membership.person_id)
-                })
-                .any(|membership| {
-                    membership
-                        .notes
-                        .as_ref()
-                        .is_some_and(|note| normalized(note).contains(&search))
-                })
+                .any(|text| normalized(text).contains(&search))
+                || detail
+                    .memberships
+                    .iter()
+                    .filter(|membership| {
+                        filter
+                            .person_id
+                            .as_ref()
+                            .is_none_or(|id| id == &membership.person_id)
+                    })
+                    .any(|membership| {
+                        membership
+                            .notes
+                            .as_ref()
+                            .is_some_and(|note| normalized(note).contains(&search))
+                    })
         })
         .collect();
     match filter.sort {

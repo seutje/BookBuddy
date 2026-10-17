@@ -1,6 +1,49 @@
 @import "tailwindcss/theme";
 @import "tailwindcss/utilities";
 
+.boolean-value {
+  padding: 0;
+  border: 0;
+  margin: 16px 0;
+}
+.boolean-value legend {
+  font-weight: 600;
+}
+button[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px #1e4e3a;
+  background: #d8e4d9;
+  color: #203c30;
+}
+.custom-fields {
+  margin-top: 24px;
+}
+.field-value-form,
+.field-filter {
+  border-bottom: 1px solid #d3dbd0;
+  padding: 16px 0;
+}
+.field-value-form > button {
+  margin-top: 12px;
+}
+.custom-filters {
+  border: 1px solid #d3dbd0;
+  border-radius: 4px;
+  margin: 20px 0;
+  padding: 16px;
+}
+.visibility-options {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+}
+.choice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
 textarea {
   font: inherit;
   width: 100%;

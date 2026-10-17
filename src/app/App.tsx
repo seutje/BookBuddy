@@ -5,6 +5,7 @@ import { PersonForm } from "../components/PersonForm";
 import { PersonPicker } from "../components/PersonPicker";
 import { People } from "../features/people/People";
 import { Library } from "../features/library/Library";
+import { Settings } from "../features/settings/Settings";
 
 const pages = ["Library", "Activity", "People", "Settings"] as const;
 type Page = (typeof pages)[number];
@@ -166,25 +167,9 @@ export function App() {
                   />
                 )}
                 {page === "Settings" && (
-                  <section>
-                    <h1>Settings</h1>
-                    <h2>Your local data</h2>
-                    <p>
-                      Books and reading information stay on this computer.
-                      Household people are labels, with no separate accounts.
-                    </p>
-                    <label>
-                      Data folder
-                      <input
-                        readOnly
-                        value={startup.data?.dataDirectory ?? "Unavailable"}
-                      />
-                    </label>
-                    <p className="muted">
-                      Keep this folder when troubleshooting. Do not copy a
-                      database while BookBuddy is running.
-                    </p>
-                  </section>
+                  <Settings
+                    dataDirectory={startup.data?.dataDirectory ?? null}
+                  />
                 )}
               </>
             )}

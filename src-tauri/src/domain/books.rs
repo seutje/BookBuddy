@@ -162,6 +162,9 @@ pub struct Membership {
 pub struct BookDetail {
     pub book: Book,
     pub memberships: Vec<Membership>,
+    pub row_fields: Vec<super::custom_fields::CustomDisplay>,
+    #[serde(skip)]
+    pub custom_search: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -212,6 +215,8 @@ pub struct BookFilter {
     pub owned: Filter<bool>,
     #[serde(default)]
     pub sort: BookSort,
+    #[serde(default)]
+    pub custom_filters: Vec<super::custom_fields::CustomFilter>,
 }
 
 pub fn normalized(value: &str) -> String {

@@ -48,6 +48,8 @@ rename, archival, Everyone, restarts, and the safe startup error screen through
 Windows UI Automation and real IPC, using fresh debug smoke databases.
 `powershell -File scripts/smoke-books.ps1` checks title-only add, shared metadata,
 person-specific notes, Mark read, searching, assignment and restart isolation.
+`powershell -File scripts/smoke-fields.ps1` checks new attributes on old and new
+books, Unknown/No/Yes, display-only defaults, filtering, hide/reactivate and rename.
 
 Library text matching ignores case and repeated whitespace, retains accents and
 punctuation, and treats search text literally. Everyone searches notes across the
