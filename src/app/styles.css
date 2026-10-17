@@ -1,0 +1,53 @@
+:root {
+  font-family: "Segoe UI", sans-serif;
+  color: #203c30;
+  background: #faf9f5;
+  font-synthesis: none;
+  line-height: 1.5;
+}
+body {
+  margin: 0;
+}
+* {
+  box-sizing: border-box;
+}
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+aside {
+  background: #183f32;
+  color: #f5f6ee;
+  padding: 28px 22px;
+}
+.brand {
+  font-size: 24px;
+}
+aside p {
+  font-size: 13px;
+}
+main {
+  padding: 48px;
+  max-width: 1000px;
+}
+h1 {
+  font-size: 30px;
+}
+.privacy {
+  color: #526358;
+  margin-top: 32px;
+}
+:focus-visible {
+  outline: 3px solid #ae7825;
+  outline-offset: 4px;
+}
+@media (max-width: 680px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  aside,
+  main {
+    padding: 24px;
+  }
+}

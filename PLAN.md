@@ -1,6 +1,6 @@
 # BookBuddy — Implementation Plan
 
-**Status:** Not started  
+**Status:** Phase 0 verified; Phase 1 next
 **Target:** Offline-only Windows desktop (Rust + Tauri 2 + React + TypeScript + SQLite)  
 **Source of truth:** [DESIGN.md](DESIGN.md)  
 **Agent rules:** [AGENTS.md](AGENTS.md)
@@ -14,13 +14,15 @@
 
 ## Phase 0 — Project decisions and scaffolding
 
-- [ ] Create Tauri 2 / React / TypeScript / Rust project with working Windows dev/build commands and pinned lockfiles.
-- [ ] Set up ESLint/formatting, Rust fmt/clippy, TypeScript strict mode and a single command to run checks.
-- [ ] Create feature-oriented frontend folders and `commands`, `domain`, `services`, `persistence`, `migrations` Rust folders.
-- [ ] Record initial ADRs for shared book vs per-person membership, scoped custom fields, reading event semantics, household ownership, and local-only privacy.
-- [ ] Establish a safe app-data location, reproducible SQLite dev setup, and .gitignore for private databases, workbook samples, backups and generated files.
-- [ ] Add CI or scripted local validation for TypeScript, Rust and database tests.
-- [ ] **Exit gate:** blank shell launches in Windows, offline, and developer checks run cleanly.
+- [x] Create Tauri 2 / React / TypeScript / Rust project with working Windows dev/build commands and pinned lockfiles.
+- [x] Set up ESLint/formatting, Rust fmt/clippy, TypeScript strict mode and a single command to run checks.
+- [x] Create feature-oriented frontend folders and `commands`, `domain`, `services`, `persistence`, `migrations` Rust folders.
+- [x] Record initial ADRs for shared book vs per-person membership, scoped custom fields, reading event semantics, household ownership, and local-only privacy.
+- [x] Establish a safe app-data location, reproducible SQLite dev setup, and .gitignore for private databases, workbook samples, backups and generated files.
+- [x] Add CI or scripted local validation for TypeScript, Rust and database tests.
+- [x] **Exit gate:** blank shell launches in Windows, offline, and developer checks run cleanly.
+
+Phase 0 verification (2026-10-17): `npm run check` passed (Prettier, ESLint, strict TypeScript, Vite build, Rust fmt, Clippy all targets/features, two SQLite integration tests). Windows `tauri build --debug --no-bundle` and `desktop:dev` succeeded. `scripts/smoke-shell.ps1` found the bundled React heading with no dev server and external WebView requests blocked by an unreachable proxy. Installer packaging remains a Phase 8 gate.
 
 ## Phase 1 — Persistence, app shell and people
 
