@@ -143,9 +143,19 @@ separate build/publish permissions and an installer checksum. Local verification
 passed three Node tests covering valid tags, malformed tags and all version
 mismatches; YAML structure/permissions, ESLint, formatting, the exact locked NSIS
 build command and the checksum step also passed. No phase checkboxes changed.
-GitHub-hosted execution/publication remains unverified until a matching tag is
-pushed; no tag or release was created during implementation. Rust/domain tests
-and interactive desktop smoke tests were not repeated for this automation-only change.
+Initial implementation did not publish a release or repeat desktop smoke tests.
+
+2026-10-17 recovery verification: GitHub recorded no run for the existing
+`v0.1.1` tag push. Added a broader tag trigger, explicit manual retry, and recovery
+of an unpublished current-version tag on `main` pushes. Nine Node tests,
+workflow structure/permissions assertions, ESLint, Prettier and `git diff --check`
+passed locally. Pushed commit `dca43c0`; GitHub Actions run `39070422365` passed
+release selection, the complete Windows `npm run check`, locked NSIS packaging,
+checksum generation and publication. Verified the public `v0.1.1` release contains
+the installer and checksum, then downloaded both and verified their SHA-256 match.
+The existing tag was not moved. ADR 0009 documents recovery and immutable assets.
+No phase checkboxes changed. Interactive desktop/private-workbook tests were not
+repeated for this CI-only change; the installer remains unsigned.
 
 ## Deferred ideas (not MVP checkboxes)
 
