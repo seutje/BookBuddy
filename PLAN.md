@@ -1,6 +1,6 @@
 # BookBuddy — Implementation Plan
 
-**Status:** Phase 0 verified; Phase 1 next
+**Status:** Phases 0–1 verified; Phase 2 next
 **Target:** Offline-only Windows desktop (Rust + Tauri 2 + React + TypeScript + SQLite)  
 **Source of truth:** [DESIGN.md](DESIGN.md)  
 **Agent rules:** [AGENTS.md](AGENTS.md)
@@ -26,15 +26,17 @@ Phase 0 verification (2026-10-17): `npm run check` passed (Prettier, ESLint, str
 
 ## Phase 1 — Persistence, app shell and people
 
-- [ ] Implement versioned SQLx SQLite migrations, foreign keys, transaction helpers and connection lifecycle.
-- [ ] Implement `person`, `book`, `person_book`, household ownership and settings tables with uniqueness and referential constraints.
-- [ ] Implement startup migration/error reporting and ensure existing data is never silently reset.
-- [ ] Add typed Tauri IPC commands, typed TypeScript invoke wrappers and structured error contracts.
-- [ ] Build compact accessible desktop shell: Library, Activity, People, Settings, global person picker and Everyone view.
-- [ ] Implement create, rename, archive and list people; make Everyone a filter, not a persisted person.
-- [ ] Add first-run create-person flow and persist the current person preference.
-- [ ] Test migrations, person rename stability, archived-person behavior, and offline persistence through restart.
-- [ ] **Exit gate:** a household can create/switch members without accounts, data survives restart, and no network is needed.
+- [x] Implement versioned SQLx SQLite migrations, foreign keys, transaction helpers and connection lifecycle.
+- [x] Implement `person`, `book`, `person_book`, household ownership and settings tables with uniqueness and referential constraints.
+- [x] Implement startup migration/error reporting and ensure existing data is never silently reset.
+- [x] Add typed Tauri IPC commands, typed TypeScript invoke wrappers and structured error contracts.
+- [x] Build compact accessible desktop shell: Library, Activity, People, Settings, global person picker and Everyone view.
+- [x] Implement create, rename, archive and list people; make Everyone a filter, not a persisted person.
+- [x] Add first-run create-person flow and persist the current person preference.
+- [x] Test migrations, person rename stability, archived-person behavior, and offline persistence through restart.
+- [x] **Exit gate:** a household can create/switch members without accounts, data survives restart, and no network is needed.
+
+Phase 1 verification (2026-10-17): `npm run check` passed, including nine Rust tests for migrations/upgrades, failed migration preservation, scoped memberships, ownership, transaction rollback, archival, stable rename, preference/restart, smoke isolation and redacted IPC errors. `scripts/smoke-people.ps1` passed on Windows with external WebView traffic blocked: create/switch/rename/archive, Everyone, repeated restarts and byte-preserving invalid-database startup. No household database was used.
 
 ## Phase 2 — Catalog and person-specific libraries
 

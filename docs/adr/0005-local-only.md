@@ -10,6 +10,10 @@ or metadata downloads are included. All release assets are bundled locally.
 Resolve the database through Tauri's local app-data directory under identifier
 `local.bookbuddy.desktop`. Debug builds use a `development` subdirectory so normal
 development cannot change the release household. Tests use temporary directories.
+Desktop smoke runs use a validated UUID leaf below `development/smoke/`, selected
+by `BOOKBUDDY_TEST_RUN` in debug builds only. This permits repeat/restart checks
+without touching development or household data. Release builds ignore that value;
+neither build accepts an arbitrary filesystem path or database URL.
 Enable foreign keys on every connection and use WAL and SQLx migrations. Startup
 errors never trigger a reset or deletion. Backups must use consistent snapshots.
 

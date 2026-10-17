@@ -3,5 +3,12 @@
   "identifier": "main",
   "description": "Local main window; no filesystem, shell, or network plugin access.",
   "windows": ["main"],
-  "permissions": []
+  "permissions": [
+    "allow-startup-status",
+    "allow-list-people",
+    "allow-create-person",
+    "allow-rename-person",
+    "allow-archive-person",
+    "allow-select-person"
+  ]
 }

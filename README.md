@@ -43,11 +43,17 @@ checks the welcome heading through Windows UI Automation with external WebView
 requests directed to an unreachable proxy. Run without a Vite server. Plain
 `cargo run` builds the development-server variant; use the Tauri build command
 before testing bundled assets.
+`powershell -File scripts/smoke-people.ps1` exercises first-run creation, switching,
+rename, archival, Everyone, restarts, and the safe startup error screen through
+Windows UI Automation and real IPC, using fresh debug smoke databases.
 
 ## Local data and privacy
 
 Release data lives in `%LOCALAPPDATA%\local.bookbuddy.desktop\bookbuddy.sqlite3`;
 debug data lives in the `development` subdirectory. Both use WAL and foreign keys.
+Debug-only desktop smoke runs set `BOOKBUDDY_TEST_RUN` to a UUID, storing synthetic
+data below `development/smoke/<UUID>`. Release builds ignore that variable. Smoke
+data is retained for inspection and is never restored into a household database.
 No environment-variable database URL can redirect the application into a household
 database. Tests use disposable temporary directories only. Startup failures preserve
 existing files. Do not delete data to resolve migration errors.
