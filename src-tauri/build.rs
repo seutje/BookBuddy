@@ -22,6 +22,12 @@ fn main() {
             "reorder_custom_fields",
             "get_custom_values",
             "set_custom_value",
+            "local_today_date",
+            "list_readings",
+            "log_reading",
+            "log_reading_today",
+            "edit_reading",
+            "delete_reading",
         ]),
     ))
     .expect("Tauri build configuration failed");

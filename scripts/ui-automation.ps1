@@ -29,16 +29,21 @@ function Wait-Element([string]$Name, [System.Windows.Automation.ControlType]$Typ
 function Click([string]$Name) {
     $deadline = [DateTime]::UtcNow.AddSeconds(15)
     do {
-        $element = Wait-Element $Name ([System.Windows.Automation.ControlType]::Button)
-        if ($element.Current.IsEnabled) { break }
         Start-Sleep -Milliseconds 100
+        try {
+            $element = Wait-Element $Name ([System.Windows.Automation.ControlType]::Button)
+            if (-not $element.Current.IsEnabled) { continue }
+            $pattern = $null
+            if ($element.TryGetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern, [ref]$pattern)) { $pattern.Invoke(); return }
+            if ($element.TryGetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern, [ref]$pattern)) { $pattern.Expand(); return }
+            if ($element.TryGetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern, [ref]$pattern)) { $pattern.Toggle(); return }
+            throw "Control cannot be invoked: $Name"
+        } catch [System.Management.Automation.MethodInvocationException] {
+            if ($_.Exception.InnerException -isnot [System.Windows.Automation.ElementNotAvailableException] -and $_.Exception.InnerException -isnot [System.Windows.Automation.ElementNotEnabledException]) { throw "Could not activate ${Name}: $($_.Exception.Message)" }
+            # A query refresh may replace an accessibility node; reacquire it.
+        }
     } until ([DateTime]::UtcNow -gt $deadline)
-    if (-not $element.Current.IsEnabled) { throw "Control remained disabled: $Name" }
-    $pattern = $null
-    if ($element.TryGetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern, [ref]$pattern)) { $pattern.Invoke(); return }
-    if ($element.TryGetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern, [ref]$pattern)) { $pattern.Expand(); return }
-    if ($element.TryGetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern, [ref]$pattern)) { $pattern.Toggle(); return }
-    throw "Control cannot be invoked: $Name"
+    throw "Control did not become available and enabled: $Name"
 }
 
 function Name-Entry([string]$Value) {
@@ -69,4 +74,13 @@ function Close-App {
         $null = $script:application.CloseMainWindow()
         if (-not $script:application.WaitForExit(5000)) { $script:application.Kill() }
     }
+}
+
+function Set-Text([string]$Label, [string]$Value) {
+    $edit = Wait-Element $Label ([System.Windows.Automation.ControlType]::Edit)
+    $edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($Value)
+}
+function Assert-Text([string]$Label, [string]$Value) {
+    $edit = Wait-Element $Label ([System.Windows.Automation.ControlType]::Edit)
+    if ($edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value -ne $Value) { throw "Wrong value in $Label" }
 }

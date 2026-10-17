@@ -24,6 +24,12 @@
     "allow-update-custom-field",
     "allow-reorder-custom-fields",
     "allow-get-custom-values",
-    "allow-set-custom-value"
+    "allow-set-custom-value",
+    "allow-local-today-date",
+    "allow-list-readings",
+    "allow-log-reading",
+    "allow-log-reading-today",
+    "allow-edit-reading",
+    "allow-delete-reading"
   ]
 }

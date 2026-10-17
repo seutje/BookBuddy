@@ -13,12 +13,18 @@ import { errorMessage } from "../../lib/api";
 import { BookForm } from "./BookForm";
 import { PersonalForm } from "./PersonalForm";
 import { CustomFields } from "../custom-fields/CustomFields";
+import { ReadingHistory } from "../activity/ReadingHistory";
+import { QuickReading } from "../activity/QuickReading";
+import { ReadingForm } from "../activity/ReadingForm";
+import { readingsApi } from "../../lib/readings";
+import type { ReadingDraft } from "../../lib/readings";
 
 type Action =
   | { type: "shared"; draft: BookDraft }
   | { type: "personal"; draft: PersonalDraft }
   | { type: "assign" }
-  | { type: "read" };
+  | { type: "read" }
+  | { type: "log"; draft: ReadingDraft };
 export function BookDetail({
   id,
   current,
@@ -29,13 +35,18 @@ export function BookDetail({
   onBack: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [logging, setLogging] = useState(false);
   const client = useQueryClient();
   const query = useQuery({
     queryKey: ["book", id],
     queryFn: () => booksApi.get(id),
   });
   const action = useMutation({
-    mutationFn: (action: Action) => {
+    mutationFn: async (action: Action) => {
+      if (action.type === "log") {
+        await readingsApi.log(action.draft);
+        return;
+      }
       if (action.type === "shared") return booksApi.update(id, action.draft);
       if (!current) return Promise.reject(new Error("Choose a person first."));
       if (action.type === "assign") return booksApi.ensure(current.id, id);
@@ -46,8 +57,10 @@ export function BookDetail({
       await Promise.all([
         client.invalidateQueries({ queryKey: ["books"] }),
         client.invalidateQueries({ queryKey: ["book", id] }),
+        client.invalidateQueries({ queryKey: ["readings"] }),
       ]);
       setEditing(false);
+      setLogging(false);
     },
   });
   const detail = query.data;
@@ -70,6 +83,7 @@ export function BookDetail({
       ) : (
         <>
           <h1>{detail.book.title}</h1>
+          <p className="muted">{`Household: ${detail.book.readCount} logged readings · Last reading: ${detail.book.lastReadOn ?? "Unknown"}`}</p>
           <p>{detail.book.authors ?? "Author unknown"}</p>
           <h2>Shared book details</h2>
           <p className="muted">Changes here apply to the household catalog.</p>
@@ -125,6 +139,33 @@ export function BookDetail({
             </>
           )}
           <CustomFields target={{ scope: "book", bookId: id }} />
+          <section className="personal-panel" aria-label="Log a reading">
+            <h2>Log a reading</h2>
+            {current && (
+              <QuickReading
+                bookId={id}
+                title={detail.book.title}
+                personId={current.id}
+                name={current.displayName}
+              />
+            )}
+            <button
+              className="quiet"
+              disabled={action.isPending}
+              onClick={() => setLogging(true)}
+            >
+              Choose date and participants
+            </button>
+            {logging && (
+              <ReadingForm
+                bookId={id}
+                current={current}
+                pending={action.isPending}
+                onSave={(draft) => action.mutateAsync({ type: "log", draft })}
+                onCancel={() => setLogging(false)}
+              />
+            )}
+          </section>
           <section className="personal-panel">
             <h2>
               {current
@@ -145,8 +186,9 @@ export function BookDetail({
                   <p className="muted">
                     Changes status only. No reading date is created.
                   </p>
+                  <p>{`${current.displayName}: ${membership.readCount} logged readings · Last reading: ${membership.lastReadOn ?? "Unknown"}`}</p>
                   <PersonalForm
-                    key={JSON.stringify(membership)}
+                    key={membership.id}
                     initial={membership}
                     name={current.displayName}
                     pending={action.isPending}
@@ -196,6 +238,18 @@ export function BookDetail({
                 ))}
               </ul>
             )}
+          </section>
+          <section className="personal-panel">
+            <h2>Reading history</h2>
+            <ReadingHistory
+              current={current}
+              filter={{
+                personId: current?.id ?? null,
+                bookId: id,
+                from: null,
+                to: null,
+              }}
+            />
           </section>
         </>
       )}

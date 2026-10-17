@@ -41,6 +41,8 @@ export interface Book extends BookDraft {
   id: string;
   createdAt: string;
   updatedAt: string;
+  readCount: number;
+  lastReadOn: string | null;
 }
 export interface PersonalDraft {
   readingStatus: ReadingStatus | null;
@@ -54,6 +56,8 @@ export interface Membership extends PersonalDraft {
   bookId: string;
   personName: string;
   archivedAt: string | null;
+  readCount: number;
+  lastReadOn: string | null;
 }
 export interface BookDetail {
   book: Book;
@@ -69,8 +73,17 @@ export interface BookFilter {
   rating: Filter<Rating>;
   listStatus: Filter<ListStatus>;
   owned: Filter<boolean>;
-  sort: "recently_added" | "title" | "author" | "rating";
+  sort:
+    | "recently_added"
+    | "title"
+    | "author"
+    | "rating"
+    | "most_recently_read"
+    | "reading_count";
   customFilters: CustomFilter[];
+  hasReadings?: boolean | null;
+  readFrom?: string | null;
+  readTo?: string | null;
 }
 export const emptyBook: BookDraft = {
   title: "",
@@ -85,6 +98,16 @@ export const emptyBook: BookDraft = {
   description: null,
   notes: null,
   owned: null,
+};
+export const allBooksFilter: BookFilter = {
+  personId: null,
+  search: "",
+  readingStatus: { mode: "any" },
+  rating: { mode: "any" },
+  listStatus: { mode: "any" },
+  owned: { mode: "any" },
+  sort: "recently_added",
+  customFilters: [],
 };
 export const booksApi = {
   list: (filter: BookFilter) => invoke<BookDetail[]>("list_books", { filter }),

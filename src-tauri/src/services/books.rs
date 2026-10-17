@@ -113,6 +113,20 @@ pub async fn duplicate_hints(
 }
 
 pub async fn list(pool: &SqlitePool, filter: BookFilter) -> Result<Vec<BookDetail>, AppError> {
+    if filter
+        .read_from
+        .as_ref()
+        .is_some_and(|date| !crate::domain::custom_fields::valid_date(date))
+        || filter
+            .read_to
+            .as_ref()
+            .is_some_and(|date| !crate::domain::custom_fields::valid_date(date))
+        || matches!((&filter.read_from, &filter.read_to), (Some(from), Some(to)) if from > to)
+    {
+        return Err(AppError::validation(
+            "Choose a valid last-reading date range.",
+        ));
+    }
     if let Some(id) = &filter.person_id {
         domain::durable_id(id)?;
     }
@@ -124,6 +138,21 @@ pub async fn list(pool: &SqlitePool, filter: BookFilter) -> Result<Vec<BookDetai
         .await?
         .into_iter()
         .filter(|detail| {
+            let (count, date) = reading_stats(detail, filter.person_id.as_deref());
+            if filter
+                .has_readings
+                .is_some_and(|expected| expected != (count > 0))
+                || filter
+                    .read_from
+                    .as_deref()
+                    .is_some_and(|from| date.is_none_or(|date| date < from))
+                || filter
+                    .read_to
+                    .as_deref()
+                    .is_some_and(|to| date.is_none_or(|date| date > to))
+            {
+                return false;
+            }
             if search.is_empty() {
                 return true;
             }
@@ -166,6 +195,14 @@ pub async fn list(pool: &SqlitePool, filter: BookFilter) -> Result<Vec<BookDetai
         .collect();
     match filter.sort {
         BookSort::RecentlyAdded => {}
+        BookSort::MostRecentlyRead => rows.sort_by(|a, b| {
+            reading_stats(b, filter.person_id.as_deref())
+                .1
+                .cmp(&reading_stats(a, filter.person_id.as_deref()).1)
+        }),
+        BookSort::ReadingCount => rows.sort_by_key(|detail| {
+            std::cmp::Reverse(reading_stats(detail, filter.person_id.as_deref()).0)
+        }),
         BookSort::Title => rows.sort_by_cached_key(|detail| normalized(&detail.book.data.title)),
         BookSort::Author => rows.sort_by_cached_key(|detail| {
             (
@@ -190,4 +227,17 @@ pub async fn list(pool: &SqlitePool, filter: BookFilter) -> Result<Vec<BookDetai
     }
     // Each row retains the participants for an Everyone summary. React edits by explicit person ID.
     Ok(rows)
+}
+
+fn reading_stats<'a>(detail: &'a BookDetail, person_id: Option<&str>) -> (i64, Option<&'a str>) {
+    if let Some(id) = person_id {
+        detail
+            .memberships
+            .iter()
+            .find(|membership| membership.person_id == id)
+            .map(|membership| (membership.read_count, membership.last_read_on.as_deref()))
+            .unwrap_or((0, None))
+    } else {
+        (detail.book.read_count, detail.book.last_read_on.as_deref())
+    }
 }

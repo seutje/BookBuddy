@@ -1,6 +1,35 @@
 @import "tailwindcss/theme";
 @import "tailwindcss/utilities";
 
+.reading-list {
+  padding: 0;
+  list-style: none;
+}
+.reading-list > li {
+  padding: 20px 0;
+  border-bottom: 1px solid #d3dbd0;
+}
+.reading-list p {
+  margin: 8px 0;
+}
+.recent-books {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.recent-books > div {
+  background: white;
+  padding: 16px;
+  border: 1px solid #d3dbd0;
+  border-radius: 4px;
+}
+.quick-reading {
+  margin: 16px 0;
+}
+fieldset > .checkbox {
+  margin: 12px 0;
+}
+
 .boolean-value {
   padding: 0;
   border: 0;

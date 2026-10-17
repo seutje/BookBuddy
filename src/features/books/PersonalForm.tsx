@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import type { PersonalDraft } from "../../lib/books";
 import { readingChoices, ratingChoices, listChoices } from "../../lib/books";
@@ -20,6 +20,12 @@ export function PersonalForm({
     listStatus: initial.listStatus,
     notes: initial.notes,
   }));
+  useEffect(() => {
+    setDraft((previous) => ({
+      ...previous,
+      readingStatus: initial.readingStatus,
+    }));
+  }, [initial.readingStatus]);
   async function submit(event: FormEvent) {
     event.preventDefault();
     try {

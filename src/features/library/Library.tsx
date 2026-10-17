@@ -215,7 +215,9 @@ export function Library({ current }: { current: Person | undefined }) {
                       value === "recently_added" ||
                       value === "title" ||
                       value === "author" ||
-                      value === "rating"
+                      value === "rating" ||
+                      value === "most_recently_read" ||
+                      value === "reading_count"
                     )
                       setFilter({ ...filter, sort: value });
                   }}
@@ -224,7 +226,58 @@ export function Library({ current }: { current: Person | undefined }) {
                   <option value="title">Title</option>
                   <option value="author">Author</option>
                   <option value="rating">Rating</option>
+                  <option value="most_recently_read">Most recently read</option>
+                  <option value="reading_count">Reading count</option>
                 </select>
+              </label>
+              <label>
+                Logged readings
+                <select
+                  value={
+                    filter.hasReadings === null ||
+                    filter.hasReadings === undefined
+                      ? "any"
+                      : filter.hasReadings
+                        ? "yes"
+                        : "no"
+                  }
+                  onChange={(event) =>
+                    setFilter({
+                      ...filter,
+                      hasReadings:
+                        event.target.value === "any"
+                          ? null
+                          : event.target.value === "yes",
+                    })
+                  }
+                >
+                  <option value="any">Any</option>
+                  <option value="yes">Has logged readings</option>
+                  <option value="no">No logged readings</option>
+                </select>
+              </label>
+              <label>
+                Last reading from
+                <input
+                  type="date"
+                  value={filter.readFrom ?? ""}
+                  onChange={(event) =>
+                    setFilter({
+                      ...filter,
+                      readFrom: event.target.value || null,
+                    })
+                  }
+                />
+              </label>
+              <label>
+                Last reading through
+                <input
+                  type="date"
+                  value={filter.readTo ?? ""}
+                  onChange={(event) =>
+                    setFilter({ ...filter, readTo: event.target.value || null })
+                  }
+                />
               </label>
             </div>
             <CustomFilters
@@ -288,6 +341,7 @@ export function Library({ current }: { current: Person | undefined }) {
                             </li>
                           ))}
                       </ul>
+                      <p className="muted">{`${current ? (memberships.find((member) => member.personId === current.id)?.readCount ?? 0) : book.readCount} logged readings · Last reading: ${(current ? memberships.find((member) => member.personId === current.id)?.lastReadOn : book.lastReadOn) ?? "Unknown"}`}</p>
                       {rowFields.map((field, index) => (
                         <p className="muted" key={`${field.fieldId}-${index}`}>
                           {field.personName ? `${field.personName} · ` : ""}

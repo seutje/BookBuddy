@@ -132,6 +132,8 @@ pub struct Book {
     pub data: BookDraft,
     pub created_at: String,
     pub updated_at: String,
+    pub read_count: i64,
+    pub last_read_on: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -155,6 +157,8 @@ pub struct Membership {
     pub rating: Option<Rating>,
     pub list_status: Option<ListStatus>,
     pub notes: Option<String>,
+    pub read_count: i64,
+    pub last_read_on: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -197,6 +201,8 @@ pub enum BookSort {
     Title,
     Author,
     Rating,
+    MostRecentlyRead,
+    ReadingCount,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -217,6 +223,9 @@ pub struct BookFilter {
     pub sort: BookSort,
     #[serde(default)]
     pub custom_filters: Vec<super::custom_fields::CustomFilter>,
+    pub has_readings: Option<bool>,
+    pub read_from: Option<String>,
+    pub read_to: Option<String>,
 }
 
 pub fn normalized(value: &str) -> String {

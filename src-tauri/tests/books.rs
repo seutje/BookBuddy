@@ -112,11 +112,10 @@ async fn shared_catalog_and_personal_values_remain_independent_after_restart() {
         1
     );
     // Status changes do not introduce event/date tables or implied history.
-    let event_tables: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM sqlite_master WHERE name = 'reading_event'")
-            .fetch_one(&pool)
-            .await
-            .unwrap();
+    let event_tables: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM reading_event")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
     assert_eq!(event_tables, 0);
     pool.close().await;
 }

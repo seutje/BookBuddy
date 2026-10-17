@@ -7,14 +7,6 @@ $executable = (Resolve-Path "$PSScriptRoot/../src-tauri/target/debug/bookbuddy.e
 $script:application = $null
 . "$PSScriptRoot/ui-automation.ps1"
 
-function Set-Text([string]$Label, [string]$Value) {
-    $edit = Wait-Element $Label ([System.Windows.Automation.ControlType]::Edit)
-    $edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($Value)
-}
-function Assert-Text([string]$Label, [string]$Value) {
-    $edit = Wait-Element $Label ([System.Windows.Automation.ControlType]::Edit)
-    if ($edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value -ne $Value) { throw "Wrong value in $Label" }
-}
 
 try {
     Open-App

@@ -6,6 +6,7 @@ import { PersonPicker } from "../components/PersonPicker";
 import { People } from "../features/people/People";
 import { Library } from "../features/library/Library";
 import { Settings } from "../features/settings/Settings";
+import { Activity } from "../features/activity/Activity";
 
 const pages = ["Library", "Activity", "People", "Settings"] as const;
 type Page = (typeof pages)[number];
@@ -111,7 +112,7 @@ export function App() {
                 {errorMessage(action.error)}
               </p>
             )}
-            {active.length === 0 ? (
+            {people.length === 0 ? (
               <section>
                 <h1>Welcome to BookBuddy</h1>
                 <p>
@@ -125,11 +126,6 @@ export function App() {
                     action.mutateAsync({ type: "create", name })
                   }
                 />
-                {people.length > 0 && (
-                  <p>
-                    Previously archived people and their history are preserved.
-                  </p>
-                )}
               </section>
             ) : (
               <>
@@ -139,18 +135,7 @@ export function App() {
                     : "Viewing everyone in the household"}
                 </p>
                 {page === "Library" && <Library current={current} />}
-                {page === "Activity" && (
-                  <section>
-                    <h1>Activity</h1>
-                    <div className="empty">
-                      <h2>No readings logged</h2>
-                      <p>
-                        Reading sessions will appear here, including books you
-                        read together.
-                      </p>
-                    </div>
-                  </section>
-                )}
+                {page === "Activity" && <Activity current={current} />}
                 {page === "People" && (
                   <People
                     people={people}

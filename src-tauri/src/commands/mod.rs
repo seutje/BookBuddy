@@ -1,6 +1,7 @@
 //! Narrow typed IPC adapters. No generic SQL or filesystem commands.
 pub mod books;
 pub mod custom_fields;
+pub mod readings;
 use crate::{
     domain::{AppError, Household},
     services::household,

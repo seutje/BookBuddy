@@ -3,13 +3,17 @@ use crate::domain::{books::*, AppError};
 use sqlx::{QueryBuilder, Sqlite, SqlitePool, Transaction};
 use std::collections::HashMap;
 
+const BOOK_PROJECTION: &str = "SELECT b.*, (SELECT COUNT(*) FROM reading_event e WHERE e.book_id = b.id) AS read_count, (SELECT MAX(e.occurred_on) FROM reading_event e WHERE e.book_id = b.id) AS last_read_on FROM book b";
+const MEMBERSHIP_PROJECTION: &str = "SELECT pb.*, p.display_name AS person_name, p.archived_at, (SELECT COUNT(*) FROM reading_event e JOIN reading_event_participant ep ON ep.event_id = e.id WHERE e.book_id = pb.book_id AND ep.person_id = pb.person_id) AS read_count, (SELECT MAX(e.occurred_on) FROM reading_event e JOIN reading_event_participant ep ON ep.event_id = e.id WHERE e.book_id = pb.book_id AND ep.person_id = pb.person_id) AS last_read_on FROM person_book pb JOIN person p ON p.id = pb.person_id WHERE (? IS NULL OR pb.book_id = ?) ORDER BY p.created_at, p.id";
+
 pub async fn all(pool: &SqlitePool) -> Result<Vec<BookDetail>, AppError> {
     filtered(pool, &BookFilter::default()).await
 }
 
 pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<BookDetail>, AppError> {
     let mut transaction = pool.begin().await?;
-    let mut query = QueryBuilder::<Sqlite>::new("SELECT b.* FROM book b WHERE 1 = 1");
+    let mut query = QueryBuilder::<Sqlite>::new(BOOK_PROJECTION);
+    query.push(" WHERE 1 = 1");
     let definitions = super::custom_fields::definitions_in(&mut transaction).await?;
     let custom = resolve_filters(&definitions, &filter.custom_filters)?;
     for (definition, filter) in custom
@@ -93,8 +97,11 @@ pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<Book
         .build_query_as::<Book>()
         .fetch_all(&mut *transaction)
         .await?;
-    let memberships = sqlx::query_as::<_, Membership>("SELECT pb.*, p.display_name AS person_name, p.archived_at FROM person_book pb JOIN person p ON p.id = pb.person_id ORDER BY p.created_at, p.id")
-        .fetch_all(&mut *transaction).await?;
+    let memberships = sqlx::query_as::<_, Membership>(MEMBERSHIP_PROJECTION)
+        .bind(None::<&str>)
+        .bind(None::<&str>)
+        .fetch_all(&mut *transaction)
+        .await?;
     let mut grouped: HashMap<String, Vec<Membership>> = HashMap::new();
     for membership in memberships {
         grouped
@@ -122,15 +129,20 @@ pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<Book
 
 pub async fn get(pool: &SqlitePool, id: &str) -> Result<BookDetail, AppError> {
     let mut transaction = pool.begin().await?;
-    let book = sqlx::query_as::<_, Book>("SELECT * FROM book WHERE id = ?")
-        .bind(id)
+    let mut query = QueryBuilder::<Sqlite>::new(BOOK_PROJECTION);
+    query.push(" WHERE b.id = ").push_bind(id);
+    let book = query
+        .build_query_as::<Book>()
         .fetch_optional(&mut *transaction)
         .await?
         .ok_or_else(|| {
             AppError::validation("That book could not be found. Refresh the library.")
         })?;
-    let memberships = sqlx::query_as::<_, Membership>("SELECT pb.*, p.display_name AS person_name, p.archived_at FROM person_book pb JOIN person p ON p.id = pb.person_id WHERE pb.book_id = ? ORDER BY p.created_at, p.id")
-        .bind(id).fetch_all(&mut *transaction).await?;
+    let memberships = sqlx::query_as::<_, Membership>(MEMBERSHIP_PROJECTION)
+        .bind(id)
+        .bind(id)
+        .fetch_all(&mut *transaction)
+        .await?;
     transaction.commit().await?;
     Ok(BookDetail {
         book,

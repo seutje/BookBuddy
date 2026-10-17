@@ -50,6 +50,8 @@ Windows UI Automation and real IPC, using fresh debug smoke databases.
 person-specific notes, Mark read, searching, assignment and restart isolation.
 `powershell -File scripts/smoke-fields.ps1` checks new attributes on old and new
 books, Unknown/No/Yes, display-only defaults, filtering, hide/reactivate and rename.
+`powershell -File scripts/smoke-readings.ps1` checks shared/repeat readings,
+derived counts, edit/delete/undo, recent shortcuts, restart and archived history.
 
 Library text matching ignores case and repeated whitespace, retains accents and
 punctuation, and treats search text literally. Everyone searches notes across the

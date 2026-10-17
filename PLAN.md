@@ -1,6 +1,6 @@
 # BookBuddy — Implementation Plan
 
-**Status:** Phases 0–3 verified; Phase 4 next
+**Status:** Phases 0–4 verified; Phase 5 next
 **Target:** Offline-only Windows desktop (Rust + Tauri 2 + React + TypeScript + SQLite)  
 **Source of truth:** [DESIGN.md](DESIGN.md)  
 **Agent rules:** [AGENTS.md](AGENTS.md)
@@ -68,14 +68,16 @@ Phase 3 verification (2026-10-17): `npm run check` passed, including twenty-two 
 
 ## Phase 4 — Reading events and household activity
 
-- [ ] Migrate reading events plus participant join table with unique per-event participants.
-- [ ] Implement log read today, backdated entry, optional note, edit/delete and event queries.
-- [ ] Support one event with multiple household members; enforce participant IDs and transactional updates.
-- [ ] Derive last read and read count from reading events; do not infer event dates from a manual read-status change.
-- [ ] Build Activity view and recent-title shortcuts for quick repeat toddler sessions.
-- [ ] Decide/document prompt to set participant status to Read while preserving all other person-specific values.
-- [ ] Test repeat readings, multiple participants, undo/edit, timezone/local-date behavior and persistence.
-- [ ] **Exit gate:** same book can be logged repeatedly and each participant's history is accurate.
+- [x] Migrate reading events plus participant join table with unique per-event participants.
+- [x] Implement log read today, backdated entry, optional note, edit/delete and event queries.
+- [x] Support one event with multiple household members; enforce participant IDs and transactional updates.
+- [x] Derive last read and read count from reading events; do not infer event dates from a manual read-status change.
+- [x] Build Activity view and recent-title shortcuts for quick repeat toddler sessions.
+- [x] Decide/document prompt to set participant status to Read while preserving all other person-specific values.
+- [x] Test repeat readings, multiple participants, undo/edit, timezone/local-date behavior and persistence.
+- [x] **Exit gate:** same book can be logged repeatedly and each participant's history is accurate.
+
+Phase 4 verification (2026-10-17): `npm run check` passed with twenty-eight Rust tests, including six reading tests for shared/repeat sessions, derived counts, edit/delete, transactional failures, archival, local-date offset boundaries and scoped history filters/sorts. `scripts/smoke-readings.ps1` passed on Windows with external WebView traffic blocked: status without an invented date, repeated quick logs, shared participants, edit/delete/undo, recent-title shortcuts, preservation of unsaved personal notes, restart and history after everyone is archived. ADR 0003 records the explicit set-Read behavior and archive/edit semantics.
 
 ## Phase 5 — XLSX importer: source ingestion and preview
 
