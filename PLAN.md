@@ -157,6 +157,28 @@ The existing tag was not moved. ADR 0009 documents recovery and immutable assets
 No phase checkboxes changed. Interactive desktop/private-workbook tests were not
 repeated for this CI-only change; the installer remains unsigned.
 
+## Signed application updates (owner-approved extension)
+
+- [x] Implement fixed-feed signed update checks, explicit install consent, progress and pre-update recovery backup.
+- [x] Add startup update notice and manual Settings retry with postponement and offline failure handling.
+- [x] Generate a dedicated BookBuddy signing key and configure signed artifacts/manifest publication in CI.
+- [x] Verify update signatures, tampering/version rejection, permissions, recovery and Windows installer handoff with isolated fixtures.
+- [ ] Verify production signing-secret configuration and a published signed updater feed.
+
+Local updater verification (2026-10-18): `npm run check` passed with eight frontend
+tests and fifty-five regular Rust tests. Twelve Node release-selection/manifest
+tests passed. Signed NSIS 0.1.2 and its version-bound signature/manifest built;
+release UI Automation verified the manual Settings check in a fresh UUID-isolated
+database with external WebView requests blocked. The separate
+`BookBuddyUpdaterAcceptance` identity passed actual SDK signed download, recovery
+archive creation, 0.1.0-to-0.1.1 NSIS handoff, installed restart and uninstall,
+preserving an identical complete SQLite state hash. Windows manifests explicitly
+declare `asInvoker`; acceptance helper paths use native separators. No household
+database or installation was changed. The owner reported adding the dedicated
+Actions secret; public-feed execution/verification remains pending. ADR 0010
+records the owner-approved network exception and key/recovery policy. Version
+0.1.1 requires one manual upgrade to gain automatic discovery.
+
 ## Deferred ideas (not MVP checkboxes)
 
 Optional ISBN lookup, remote covers, barcode scanning, generic CSV imports, reading goals and cross-device synchronization require separate decisions. Do not implement opportunistically.

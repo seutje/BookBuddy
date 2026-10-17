@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/windows-toolchain.ps1"
 Set-Location "$PSScriptRoot/.."
-foreach ($step in @('format:check', 'lint', 'typecheck', 'build')) {
+foreach ($step in @('format:check', 'lint', 'typecheck', 'test', 'build')) {
     & npm.cmd run $step
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }

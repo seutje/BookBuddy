@@ -10,6 +10,7 @@ import { Activity } from "../features/activity/Activity";
 import { ImportWizard } from "../features/import/ImportWizard";
 import type { ImportSummary } from "../lib/import";
 import { backupsApi } from "../lib/backups";
+import { UpdateNotice } from "../features/settings/UpdateNotice";
 
 const pages = ["Library", "Activity", "People", "Settings"] as const;
 type Page = (typeof pages)[number];
@@ -86,6 +87,7 @@ export function App() {
 
   return (
     <div className="shell">
+      {ready && <UpdateNotice />}
       <a className="skip-link" href="#main">
         Skip to content
       </a>

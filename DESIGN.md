@@ -92,7 +92,7 @@ An individual can be attached to an already-known book from the detail view or t
 - Manage custom fields by scope, label, type, options, default, order, and visibility.
 - Manage people; export/import backups; data location and recovery.
 - Optional personal preferences (list or grid view, default selected person, show covers), persisted locally.
-- No account, network, analytics, or sharing settings.
+- No account, analytics, or sharing settings. The owner-approved extension in §17 adds Application updates with a manual retry.
 
 ## 4. Default attributes and behaviors
 
@@ -259,7 +259,7 @@ Every write validates references, payload types, and field scope on the Rust sid
 - Import starts with validation and preview, saves a pre-restore backup, and performs an atomic replace/merge strategy. MVP can support **restore/replace only**, explicitly warning that merge is unsupported.
 - All book data is local; anyone with OS access to the app data can read it. Multiple people are organizational profiles, not private accounts.
 - Restrict filesystem access through narrow Tauri capabilities; validate inputs, run migrations safely, escape UI text.
-- No analytics, background web traffic, update checker or online metadata fetch needed for the MVP.
+- No analytics or online metadata fetch. The owner-approved extension in §17 permits one nonblocking update check at startup; all core functionality stays usable offline.
 
 ## 11. Implementation roadmap overview
 
@@ -435,6 +435,7 @@ The desktop may combine choose and inspect in `choose_library_xlsx()` and use an
 - Any file-system access must be constrained through explicit Tauri 2 capabilities and a user-selected native file dialog or application data directory. Remote page content must never receive privileged commands.
 - Prefer additive, tested SQLx migrations; never modify a released migration. Ensure `PRAGMA foreign_keys=ON` on all connections and use robust local-path handling on Windows.
 - On every release, preserve an upgrade path from an older local database and test backup/restore. Provide a documented data folder location in the app.
+- Owner-approved extension (2026-10-17): installed Windows releases check once at startup for signed updates from the fixed public `seutje/BookBuddy` GitHub release feed. Startup failures are silent and core use remains offline. Settings offers a manual retry; notes are plain text, postponement downloads nothing, and installation requires explicit consent. Verify the artifact and signed version, save a complete local pre-update recovery backup, then hand off to the installer and restart. Use a dedicated BookBuddy signing key, separate from PantryPal, with only its public key committed. Development and isolated acceptance runs never contact the production feed. See ADR 0010.
 - Use short ADRs for material decisions that change book/person scoping, import interpretation, deduplication, history semantics, or backup format. Unresolved uncertainty is surfaced, not hidden by a guessed inference.
 
 ## 18. Acceptance tests and traceable fixtures

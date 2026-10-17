@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "BookBuddy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "identifier": "local.bookbuddy.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -30,6 +30,19 @@
     "windows": {
       "webviewInstallMode": {
         "type": "skip"
+      }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJEQzdFMkU0MUY4Q0ZEN0QKUldSOS9Zd2Y1T0xIdlVEbjZ4MS9PNGFVWFJoc3FiamdiMWh0MEN0SGdUcE9FOEZkOFdGdVMxOEkK",
+      "endpoints": [
+        "https://github.com/seutje/BookBuddy/releases/latest/download/latest.json"
+      ],
+      "requireSignedVersion": true,
+      "windows": {
+        "installMode": "passive"
       }
     }
   }

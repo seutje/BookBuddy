@@ -17,7 +17,7 @@ npm run desktop:dev
 Build bundled frontend assets and an NSIS installer:
 
 ```powershell
-npm run desktop:build
+powershell -File scripts/release-build.ps1
 ```
 
 The installer requires an existing WebView2 runtime and does not download one.
@@ -34,6 +34,9 @@ This runs Prettier, ESLint, strict TypeScript, the frontend production build,
 Rust formatting, Clippy with warnings denied, and Rust tests including temporary
 SQLite migrations/reopen and invalid-database preservation. Commit both lockfiles.
 Use `npm run format` and `cargo fmt --manifest-path src-tauri/Cargo.toml` to format.
+It also runs frontend update-flow tests. `node --test scripts/*.test.mjs` checks
+release selection and signed manifest generation. See `docs/windows-release.md`
+for the dedicated signing key, CI secret and updater deployment.
 After dependencies are cached, append `--offline` to Cargo commands as needed.
 
 Desktop smoke checks must also launch the built executable on Windows, inspect

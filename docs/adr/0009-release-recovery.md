@@ -2,6 +2,9 @@
 
 Status: Accepted · 2026-10-17
 
+ADR 0010 extends the distribution assets with signed updates and supersedes the
+original exclusion of an installed update service below.
+
 GitHub Actions publishes the Windows x64 installer and its SHA-256 checksum from
 an existing stable `vMAJOR.MINOR.PATCH` tag. Resolve the tag to a commit before
 building and check every manifest and lockfile against its version. Only the

@@ -1,9 +1,9 @@
 [package]
 name = "bookbuddy"
-version = "0.1.1"
+version = "0.1.2"
 description = "Offline household book tracker"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.90"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
@@ -30,3 +30,8 @@ tauri-plugin-dialog = "2"
 zip = { version = "4", default-features = false, features = ["deflate"] }
 quick-xml = "0.42"
 tempfile = "3"
+tauri-plugin-updater = "=2.13.3"
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+
+[dev-dependencies]
+tauri = { version = "2", features = ["test"] }

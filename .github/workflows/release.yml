@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: "24"
       - name: Test release selection
-        run: node --test scripts/check-release-version.test.mjs scripts/resolve-release.test.mjs
+        run: node --test scripts/*.test.mjs
       - name: Resolve the existing version tag
         id: target
         env:
@@ -75,6 +75,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           "version=$($env:RELEASE_TAG.Substring(1))" | Add-Content -Encoding utf8 -LiteralPath $env:GITHUB_OUTPUT
 
+      - name: Verify dedicated updater signing secret
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { throw 'Configure the dedicated BookBuddy TAURI_SIGNING_PRIVATE_KEY repository secret before releasing.' }
+
       - name: Install Rust tooling
         run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy
 
@@ -89,8 +95,15 @@ jobs:
 
       - name: Build NSIS installer
         run: |
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { throw 'Configure the dedicated BookBuddy TAURI_SIGNING_PRIVATE_KEY repository secret before releasing.' }
           . ./scripts/windows-toolchain.ps1
           npm run tauri -- build --ci --bundles nsis -- --locked
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/create-updater-manifest.mjs "$env:RELEASE_TAG"
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
 
       - name: Calculate installer checksum
         run: |
@@ -106,6 +119,8 @@ jobs:
           path: |
             src-tauri/target/release/bundle/nsis/BookBuddy_${{ steps.version.outputs.version }}_x64-setup.exe
             src-tauri/target/release/bundle/nsis/BookBuddy_${{ steps.version.outputs.version }}_x64-setup.exe.sha256
+            src-tauri/target/release/bundle/nsis/BookBuddy_${{ steps.version.outputs.version }}_x64-setup.exe.sig
+            src-tauri/target/release/bundle/nsis/latest.json
           if-no-files-found: error
           compression-level: 0
           retention-days: 7
@@ -152,4 +167,4 @@ jobs:
             --verify-tag \
             --title "BookBuddy $RELEASE_TAG" \
             --generate-notes \
-            --notes "Windows x64 installer and SHA-256 checksum. The installer is unsigned and requires an existing Microsoft Edge WebView2 Runtime."
+            --notes "Windows x64 installer, SHA-256 checksum and signed updater feed. Update signatures verify BookBuddy releases; the installer lacks an Authenticode publisher certificate and requires an existing Microsoft Edge WebView2 Runtime."

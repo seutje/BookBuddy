@@ -8,6 +8,8 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(services::updates::UpdateState::default())
         .setup(|app| {
             let test_run = if cfg!(debug_assertions) {
                 std::env::var("BOOKBUDDY_TEST_RUN").ok()
@@ -51,6 +53,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::updates::check_app_update,
+            commands::updates::install_app_update,
             commands::backups::backup_status,
             commands::backups::update_backup_settings,
             commands::backups::export_library_backup,

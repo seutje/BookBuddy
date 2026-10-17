@@ -2,7 +2,7 @@
 
 BookBuddy stores the household in SQLite on this Windows computer. It has no
 accounts, authentication, hosted storage, telemetry, analytics, cloud sync,
-metadata requests, automatic cover downloads or app update service. All core
+metadata requests or automatic cover downloads. All core
 features work without internet.
 
 People organize independent statuses, ratings, notes and reading participation.
@@ -25,3 +25,10 @@ The Windows installer bundles the app's assets and skips WebView2 downloading.
 Microsoft's WebView2 Runtime is an existing platform prerequisite; obtain its
 offline installer separately when needed. BookBuddy does not contact a metadata
 or cloud service on startup or while using the library.
+
+Installed releases check GitHub once at startup for a signed BookBuddy update;
+Settings can retry. GitHub receives ordinary connection metadata, including your
+IP address, when checking or downloading a release. Household
+records, notes, names, workbook contents, local paths and backups are never sent.
+Offline failures do not interrupt the library. Downloads and installation occur
+only after confirmation, with a complete local recovery backup saved first.

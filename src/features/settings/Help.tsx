@@ -47,6 +47,12 @@ export function Help() {
         see the household information. Backups contain personal data and are
         unencrypted.
       </p>
+      <p>
+        Installed releases check GitHub once for signed application updates.
+        Offline failures stay quiet. Settings can check again; choose Not now to
+        postpone, or save your edits before Download and install. A complete
+        local recovery backup is saved before the installer starts.
+      </p>
       <h2>Keyboard navigation</h2>
       <p>
         Use Tab and Shift+Tab to move between controls, Enter or Space to

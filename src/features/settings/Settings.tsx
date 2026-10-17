@@ -3,12 +3,14 @@ import { ImportWizard } from "../import/ImportWizard";
 import { ImportHistory } from "../import/ImportHistory";
 import { BackupPanel } from "./BackupPanel";
 import { Help } from "./Help";
+import { UpdateNotice } from "./UpdateNotice";
 
 export function Settings({ dataDirectory }: { dataDirectory: string | null }) {
   return (
     <section>
       <h1>Settings</h1>
       <Help />
+      <UpdateNotice manual />
       <BackupPanel />
       <FieldManager />
       <ImportWizard />

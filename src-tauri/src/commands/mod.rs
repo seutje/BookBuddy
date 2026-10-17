@@ -4,6 +4,7 @@ pub mod books;
 pub mod custom_fields;
 pub mod import;
 pub mod readings;
+pub mod updates;
 use crate::{
     domain::{AppError, Household},
     services::household,

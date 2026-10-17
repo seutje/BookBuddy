@@ -7,6 +7,9 @@ use std::{collections::BTreeSet, path::Path};
 
 #[test]
 fn capabilities_csp_and_frontend_sinks_keep_a_narrow_local_boundary() {
+    let manifest = include_str!("windows.manifest");
+    assert!(manifest.contains("requestedExecutionLevel level=\"asInvoker\""));
+    assert!(include_str!("../build.rs").contains("include_str!(\"tests/windows.manifest\")"));
     let capabilities: serde_json::Value =
         serde_json::from_str(include_str!("../capabilities/main.json")).unwrap();
     assert!(capabilities.get("remote").is_none());
@@ -24,6 +27,12 @@ fn capabilities_csp_and_frontend_sinks_keep_a_narrow_local_boundary() {
         })
         .collect();
     let commands: BTreeSet<String> = include_str!("../build.rs")
+        .split(".commands(&[")
+        .nth(1)
+        .expect("Explicit application command list")
+        .split("])")
+        .next()
+        .unwrap()
         .lines()
         .filter_map(|line| {
             line.trim()

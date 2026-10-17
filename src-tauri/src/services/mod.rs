@@ -7,6 +7,7 @@ pub mod import_commit;
 pub mod import_history;
 pub mod import_preview;
 pub mod readings;
+pub mod updates;
 pub mod xlsx_reader;
 
 /// Test runs may select a UUID leaf only within the isolated debug data folder.

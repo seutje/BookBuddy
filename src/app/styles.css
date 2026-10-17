@@ -403,6 +403,22 @@ nav button[aria-current="page"] {
   top: 8px;
   left: 8px;
 }
+.update-dialog {
+  margin: auto;
+  width: min(40rem, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid #d3dbd0;
+  border-radius: 8px;
+  padding: 24px;
+}
+.update-dialog::backdrop {
+  background: #0006;
+}
+.update-notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 680px) {
   .shell {
     grid-template-columns: 1fr;

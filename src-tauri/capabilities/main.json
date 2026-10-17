@@ -4,6 +4,8 @@
   "description": "Local main window; no filesystem, shell, or network plugin access.",
   "windows": ["main"],
   "permissions": [
+    "allow-check-app-update",
+    "allow-install-app-update",
     "allow-startup-status",
     "allow-list-people",
     "allow-create-person",

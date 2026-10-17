@@ -2,6 +2,10 @@
 
 Status: Accepted · 2026-10-17
 
+Update-service exclusion superseded by the owner-approved ADR 0010. Storage and
+privacy boundaries below still apply; only signed update discovery/downloads use
+the fixed public GitHub feed.
+
 People are local organizational labels, with no authentication. Rust owns SQLite
 and filesystem operations. React receives narrow typed commands, never arbitrary
 SQL or unrestricted file access. No analytics, network services, automatic updates
