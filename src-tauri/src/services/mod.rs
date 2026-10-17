@@ -2,7 +2,9 @@
 pub mod books;
 pub mod custom_fields;
 pub mod household;
+pub mod import_preview;
 pub mod readings;
+pub mod xlsx_reader;
 
 /// Test runs may select a UUID leaf only within the isolated debug data folder.
 /// Release builds never accept a data-location override.

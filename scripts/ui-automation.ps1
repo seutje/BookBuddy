@@ -1,6 +1,8 @@
 ﻿function Find-Element([string]$Name, [System.Windows.Automation.ControlType]$Type = $null) {
     $processCondition = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::ProcessIdProperty), $script:application.Id
-    $window = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Children, $processCondition)
+    $windowName = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::NameProperty), 'BookBuddy'
+    $windowCondition = New-Object System.Windows.Automation.AndCondition $processCondition, $windowName
+    $window = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Children, $windowCondition)
     if (-not $window) { return $null }
     $condition = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::NameProperty), $Name
     if ($Type) {
@@ -19,7 +21,9 @@ function Wait-Element([string]$Name, [System.Windows.Automation.ControlType]$Typ
         Start-Sleep -Milliseconds 200
     } until ([DateTime]::UtcNow -gt $deadline)
     $processCondition = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::ProcessIdProperty), $script:application.Id
-    $window = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Children, $processCondition)
+    $windowName = New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::NameProperty), 'BookBuddy'
+    $windowCondition = New-Object System.Windows.Automation.AndCondition $processCondition, $windowName
+    $window = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Children, $windowCondition)
     if ($window) {
         $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition) | ForEach-Object { Write-Host $_.Current.ControlType.ProgrammaticName $_.Current.Name }
     }

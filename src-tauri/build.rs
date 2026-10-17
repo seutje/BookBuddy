@@ -28,6 +28,8 @@ fn main() {
             "log_reading_today",
             "edit_reading",
             "delete_reading",
+            "choose_library_xlsx",
+            "preview_library_xlsx_mapping",
         ]),
     ))
     .expect("Tauri build configuration failed");

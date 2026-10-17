@@ -402,6 +402,8 @@ Add the following entities (or equivalent normalized tables) to the conceptual m
 
 Typed commands: `inspect_library_xlsx(path) -> ImportPreview`, `preview_library_xlsx_mapping(draft) -> ImportPreview`, `commit_library_xlsx_import(reviewed_plan) -> ImportSummary`, `list_title_verification_tasks()`, `resolve_title_verification(id, decision)`. Revalidate the source file's hash between inspection and commit to avoid a changed-file time-of-check/time-of-use issue. Keep file access constrained to native chosen paths and narrowly scoped Tauri permissions.
 
+The desktop may combine choose and inspect in `choose_library_xlsx()` and use an opaque, process-local selection token for subsequent preview/commit instead of accepting arbitrary frontend paths (ADR 0007). Unmatched historical borrowing rows may remain unlinked (`book_id` nullable) with their complete source evidence until explicitly reviewed; this never creates a guessed catalog identity. Missing Library History or Check Titles requires acknowledgement of the incomplete source; Book Catalogue and its Title mapping remain essential.
+
 ### 15.7 Acceptance criteria — sample workbook
 
 - Recognizes all five sheets in the supplied source workbook, imports **312 catalogue rows**, **253 library-history rows**, and **35 title-verification rows** without falsely importing dashboard summaries as books.

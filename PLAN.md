@@ -1,6 +1,6 @@
 # BookBuddy — Implementation Plan
 
-**Status:** Phases 0–4 verified; Phase 5 next
+**Status:** Phases 0–5 verified; Phase 6 next
 **Target:** Offline-only Windows desktop (Rust + Tauri 2 + React + TypeScript + SQLite)  
 **Source of truth:** [DESIGN.md](DESIGN.md)  
 **Agent rules:** [AGENTS.md](AGENTS.md)
@@ -81,17 +81,19 @@ Phase 4 verification (2026-10-17): `npm run check` passed with twenty-eight Rust
 
 ## Phase 5 — XLSX importer: source ingestion and preview
 
-- [ ] Add offline Rust `.xlsx` reader (e.g. calamine), input constraints and structured parsing warnings.
-- [ ] Recognize source tabs: `Book Catalogue`, `Library History`, `Check Titles`, `Dashboard`, `How to Use`; reject ambiguous/missing essential sheets clearly.
-- [ ] Detect columns by normalized header name, not hardcoded letter; ignore blank rows; warn on new nonempty columns.
-- [ ] Implement all `Book Catalogue` column mappings in DESIGN §15.2, including preservation of original labels and unknowns.
-- [ ] Map source people `Carly` and `Mom` to new or existing local members; ratings remain per person and missing Mom values do not fabricate assignments.
-- [ ] Parse `Library History` to distinct historical borrowing records, preserving approximate date/date type/source PDF rather than fabricating reading sessions.
-- [ ] Parse `Check Titles` into a verifiable task queue, retaining unresolved and ambiguous source rows.
-- [ ] Inspect row counts, date-cell types, title/author ambiguity, source counts and borrow-history discrepancies.
-- [ ] Implement native Choose File → Inspect → Review preview with **zero writes** to the library during these steps.
-- [ ] Test small synthetic workbooks for malformed dates, missing tabs, reordered headers, blanks, unknown booleans and duplicate titles.
-- [ ] **Exit gate:** user can see exactly what will change, source warnings and people mappings before committing.
+- [x] Add offline Rust `.xlsx` reader (e.g. calamine), input constraints and structured parsing warnings.
+- [x] Recognize source tabs: `Book Catalogue`, `Library History`, `Check Titles`, `Dashboard`, `How to Use`; reject ambiguous/missing essential sheets clearly.
+- [x] Detect columns by normalized header name, not hardcoded letter; ignore blank rows; warn on new nonempty columns.
+- [x] Implement all `Book Catalogue` column mappings in DESIGN §15.2, including preservation of original labels and unknowns.
+- [x] Map source people `Carly` and `Mom` to new or existing local members; ratings remain per person and missing Mom values do not fabricate assignments.
+- [x] Parse `Library History` to distinct historical borrowing records, preserving approximate date/date type/source PDF rather than fabricating reading sessions.
+- [x] Parse `Check Titles` into a verifiable task queue, retaining unresolved and ambiguous source rows.
+- [x] Inspect row counts, date-cell types, title/author ambiguity, source counts and borrow-history discrepancies.
+- [x] Implement native Choose File → Inspect → Review preview with **zero writes** to the library during these steps.
+- [x] Test small synthetic workbooks for malformed dates, missing tabs, reordered headers, blanks, unknown booleans and duplicate titles.
+- [x] **Exit gate:** user can see exactly what will change, source warnings and people mappings before committing.
+
+Phase 5 verification (2026-10-17): `npm run check` passed with thirty-five regular Rust tests (two opt-in XLSX tests excluded from the default run). Seven preview tests exercise all sheets/mappings, header shifts/reordering, source identity, unknown columns, malformed/missing/ambiguous input, date systems/precision, ratings and booleans; preview also succeeds against a SQLite read-only pool. The supplied private-workbook aggregate test was explicitly run and passed all documented counts without printing source rows. The synthetic-fixture emitter and `scripts/smoke-import-preview.ps1` passed, including native selection, people-mapping refresh and zero library/definition writes. ADR 0007 records source/provenance decisions and the opaque file-selection boundary. Transactional commit remains Phase 6.
 
 ## Phase 6 — XLSX importer: safe commit and verification
 

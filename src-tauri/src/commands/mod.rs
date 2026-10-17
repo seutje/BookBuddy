@@ -1,6 +1,7 @@
 //! Narrow typed IPC adapters. No generic SQL or filesystem commands.
 pub mod books;
 pub mod custom_fields;
+pub mod import;
 pub mod readings;
 use crate::{
     domain::{AppError, Household},
@@ -13,6 +14,7 @@ use tauri::State;
 pub struct AppState {
     pub pool: Option<SqlitePool>,
     pub data_directory: Option<String>,
+    pub workbooks: std::sync::Mutex<std::collections::HashMap<String, import::SelectedWorkbook>>,
 }
 
 impl AppState {

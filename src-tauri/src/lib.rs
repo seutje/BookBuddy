@@ -7,6 +7,7 @@ use tauri::Manager;
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let test_run = if cfg!(debug_assertions) {
                 std::env::var("BOOKBUDDY_TEST_RUN").ok()
@@ -22,6 +23,7 @@ pub fn run() {
             app.manage(commands::AppState {
                 pool,
                 data_directory: directory.map(|path| path.to_string_lossy().into_owned()),
+                workbooks: std::sync::Mutex::new(std::collections::HashMap::new()),
             });
             Ok(())
         })
@@ -52,7 +54,9 @@ pub fn run() {
             commands::readings::log_reading,
             commands::readings::log_reading_today,
             commands::readings::edit_reading,
-            commands::readings::delete_reading
+            commands::readings::delete_reading,
+            commands::import::choose_library_xlsx,
+            commands::import::preview_library_xlsx_mapping
         ])
         .build(tauri::generate_context!())
         .expect("BookBuddy could not start; existing data has been preserved")

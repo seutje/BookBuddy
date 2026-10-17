@@ -7,6 +7,7 @@ import { People } from "../features/people/People";
 import { Library } from "../features/library/Library";
 import { Settings } from "../features/settings/Settings";
 import { Activity } from "../features/activity/Activity";
+import { ImportWizard } from "../features/import/ImportWizard";
 
 const pages = ["Library", "Activity", "People", "Settings"] as const;
 type Page = (typeof pages)[number];
@@ -126,6 +127,7 @@ export function App() {
                     action.mutateAsync({ type: "create", name })
                   }
                 />
+                <ImportWizard />
               </section>
             ) : (
               <>

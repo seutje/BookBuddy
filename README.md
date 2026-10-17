@@ -52,6 +52,11 @@ person-specific notes, Mark read, searching, assignment and restart isolation.
 books, Unknown/No/Yes, display-only defaults, filtering, hide/reactivate and rename.
 `powershell -File scripts/smoke-readings.ps1` checks shared/repeat readings,
 derived counts, edit/delete/undo, recent shortcuts, restart and archived history.
+To exercise the native XLSX picker with public synthetic data, first run
+`cargo test --manifest-path src-tauri/Cargo.toml --all-features --test xlsx_preview emit_desktop_fixture -- --ignored`,
+then `powershell -File scripts/smoke-import-preview.ps1` after a bundled debug build.
+The private-workbook aggregate test is opt-in and never prints source rows:
+`cargo test --manifest-path src-tauri/Cargo.toml --all-features --test xlsx_preview supplied_private_workbook -- --ignored`.
 
 Library text matching ignores case and repeated whitespace, retains accents and
 punctuation, and treats search text literally. Everyone searches notes across the

@@ -1,10 +1,12 @@
 import { FieldManager } from "../custom-fields/FieldManager";
+import { ImportWizard } from "../import/ImportWizard";
 
 export function Settings({ dataDirectory }: { dataDirectory: string | null }) {
   return (
     <section>
       <h1>Settings</h1>
       <FieldManager />
+      <ImportWizard />
       <section className="personal-panel">
         <h2>Your local data</h2>
         <p>

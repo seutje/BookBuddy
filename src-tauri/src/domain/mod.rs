@@ -1,6 +1,7 @@
 //! Domain types and validation, independent of the presentation layer.
 pub mod books;
 pub mod custom_fields;
+pub mod import;
 pub mod readings;
 use serde::Serialize;
 

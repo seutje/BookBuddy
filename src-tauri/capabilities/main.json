@@ -30,6 +30,8 @@
     "allow-log-reading",
     "allow-log-reading-today",
     "allow-edit-reading",
-    "allow-delete-reading"
+    "allow-delete-reading",
+    "allow-choose-library-xlsx",
+    "allow-preview-library-xlsx-mapping"
   ]
 }
