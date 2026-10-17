@@ -163,7 +163,7 @@ repeated for this CI-only change; the installer remains unsigned.
 - [x] Add startup update notice and manual Settings retry with postponement and offline failure handling.
 - [x] Generate a dedicated BookBuddy signing key and configure signed artifacts/manifest publication in CI.
 - [x] Verify update signatures, tampering/version rejection, permissions, recovery and Windows installer handoff with isolated fixtures.
-- [ ] Verify production signing-secret configuration and a published signed updater feed.
+- [x] Verify production signing-secret configuration and a published signed updater feed.
 
 Local updater verification (2026-10-18): `npm run check` passed with eight frontend
 tests and fifty-five regular Rust tests. Twelve Node release-selection/manifest
@@ -174,8 +174,14 @@ database with external WebView requests blocked. The separate
 archive creation, 0.1.0-to-0.1.1 NSIS handoff, installed restart and uninstall,
 preserving an identical complete SQLite state hash. Windows manifests explicitly
 declare `asInvoker`; acceptance helper paths use native separators. No household
-database or installation was changed. The owner reported adding the dedicated
-Actions secret; public-feed execution/verification remains pending. ADR 0010
+database or installation was changed. The owner added the dedicated Actions
+secret. GitHub Actions run `39074016229` passed all checks, signed packaging and
+publication for tag `v0.1.2` (commit `936a0e7`). Verified the published installer,
+checksum, signature and `latest.json`, including the latest-release redirect.
+The explicit `published_feed_verifies_the_actual_installer_with_bookbuddy_key`
+test passed against the real public feed and downloaded installer, without
+executing it, proving that CI's signing key matches the committed public key.
+ADR 0010
 records the owner-approved network exception and key/recovery policy. Version
 0.1.1 requires one manual upgrade to gain automatic discovery.
 

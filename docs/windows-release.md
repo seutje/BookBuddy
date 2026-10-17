@@ -72,6 +72,13 @@ actual public feed and installer signature without executing it:
 cargo test --manifest-path src-tauri/Cargo.toml --locked --test signed_releases published_feed_verifies -- --ignored
 ```
 
+Verified on 2026-10-18: [v0.1.2](https://github.com/seutje/BookBuddy/releases/tag/v0.1.2)
+was signed and published by [GitHub Actions](https://github.com/seutje/BookBuddy/actions/runs/39074016229).
+The public-feed acceptance test downloaded and verified the actual published
+installer using the committed BookBuddy public key, without executing it.
+Local isolated installer handoff, restart and uninstall preserved the full
+SQLite state. Fresh-OS prerequisite testing remains separate from these checks.
+
 ## Build and test locally
 
 Build on Windows x64 with Node/npm, Rust MSVC, Visual Studio C++ tools and WebView2.
