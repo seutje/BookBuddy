@@ -135,6 +135,18 @@ Phase 7 verification (2026-10-17): `npm run check` passed with forty-seven regul
 
 Phase 8 verification (2026-10-17): `npm run check` passed: Prettier, ESLint, strict TypeScript, production frontend build, Rust fmt, Clippy all targets/features and fifty regular Rust tests. Six opt-in/helper tests remain excluded by default; private preview/commit aggregates and synthetic fixture emitters were run explicitly. Security boundary tests and invalid-ID/literal-string tests passed. The 5,000-book/20,000-reading opt-in profile identified and removed repeated membership/event scans; debug medians were about 122-155 ms for book operations and 219 ms for 20,000 activity entries. Source-bounded styles keep documentation/fixtures out of production utility scanning. Native Windows x64 NSIS builds succeeded for 0.1.0 and 0.1.1; fresh installation, actual 0.1.0-to-0.1.1 upgrade and same-version reinstall preserved a UUID-isolated release dataset. The final installed 0.1.1 artifact passed `scripts/smoke-keyboard.ps1` with actual keys and foreground ownership checks, then `scripts/offline-acceptance.ps1 -SkipKeyboard` passed all eight remaining UI Automation scripts, including 1,001-record pagination and backup/restored reading-count checks. External WebView requests were blocked throughout. Windows version: 10.0.26200.0 (x64), existing WebView2 Runtime. Guides and verification details are in `docs/`. No household database was opened by acceptance tests. The installer is unsigned and requires an existing WebView2 Runtime; optional covers and deferred online features are not implemented.
 
+## Release automation follow-up
+
+2026-10-17: Added tag-triggered Windows installer publishing in
+`.github/workflows/release.yml`, with version/lockfile validation, existing checks,
+separate build/publish permissions and an installer checksum. Local verification
+passed three Node tests covering valid tags, malformed tags and all version
+mismatches; YAML structure/permissions, ESLint, formatting, the exact locked NSIS
+build command and the checksum step also passed. No phase checkboxes changed.
+GitHub-hosted execution/publication remains unverified until a matching tag is
+pushed; no tag or release was created during implementation. Rust/domain tests
+and interactive desktop smoke tests were not repeated for this automation-only change.
+
 ## Deferred ideas (not MVP checkboxes)
 
 Optional ISBN lookup, remote covers, barcode scanning, generic CSV imports, reading goals and cross-device synchronization require separate decisions. Do not implement opportunistically.

@@ -1,5 +1,29 @@
 # Windows release and acceptance
 
+## Publish from a version tag
+
+`.github/workflows/release.yml` automatically checks, builds and publishes the
+Windows x64 NSIS installer when a stable version tag such as `v0.1.1` is pushed.
+The workflow must be present in the tagged commit. Before tagging, keep the
+version in `package.json`, `package-lock.json` (including its root package),
+`src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock`
+in sync. The workflow rejects mismatches and noncanonical/prerelease tags.
+
+```powershell
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+The Windows build job runs `npm ci` and `npm run check`, then packages with the
+Cargo lockfile enforced. Only the installer and SHA-256 sidecar pass to the
+publishing job, which creates a published GitHub Release with generated notes using the
+built-in `GITHUB_TOKEN` and `contents: write` permission. No additional secret is
+needed. Existing releases are not overwritten on rerun. Private-workbook tests
+and interactive desktop smoke tests are not run on GitHub; perform the documented
+local release acceptance before tagging. No tag is pushed by the workflow itself.
+
+## Build and test locally
+
 Build on Windows x64 with Node/npm, Rust MSVC, Visual Studio C++ tools and WebView2.
 Use `npm ci`, the committed Cargo lockfile, and `npm run check` before packaging.
 `scripts/windows-toolchain.ps1` imports the installed C++ compiler environment.
