@@ -482,6 +482,7 @@ fn field_proposals(
     definitions: &[FieldDefinition],
     draft: &ImportReviewDraft,
     errors: &mut Vec<String>,
+    previous_fields: &BTreeMap<String, String>,
 ) -> Vec<ProposedField> {
     let specs = [
         ("format", "Format", Scope::Book, Kind::Select),
@@ -504,7 +505,7 @@ fn field_proposals(
     specs.into_iter().map(|(key, label, scope, kind)| {
         let mapping = draft.fields.iter().find(|mapping| mapping.source_key == key);
         let matching = definitions.iter().find(|definition| definition.draft.active && definition.draft.scope == scope && definition.draft.kind == kind && normalize(&definition.draft.label) == normalize(label));
-        let existing_field_id = mapping.map(|mapping| mapping.existing_field_id.clone()).unwrap_or_else(|| matching.map(|definition| definition.id.clone()));
+        let existing_field_id = mapping.map(|mapping| mapping.existing_field_id.clone()).unwrap_or_else(|| previous_fields.get(key).cloned().or_else(|| matching.map(|definition| definition.id.clone())));
         if let Some(id) = &existing_field_id { if !definitions.iter().any(|definition| definition.id == *id && definition.draft.active && definition.draft.scope == scope && definition.draft.kind == kind) { errors.push(format!("Custom field mapping for {label} has an incompatible field ID, scope or type.")); } }
         let label = mapping.map(|mapping| mapping.new_label.clone()).unwrap_or_else(|| label.into());
         if existing_field_id.is_none() && (crate::domain::person_name(&label).is_err() || definitions.iter().any(|definition| definition.draft.active && definition.draft.scope == scope && normalize(&definition.draft.label) == normalize(&label))) { errors.push(format!("Choose a distinct valid label or compatible existing field for {key}.")); }
@@ -526,17 +527,50 @@ pub async fn preview(
         .collect();
     let people = household::list(pool).await?;
     let definitions = custom_fields::list(pool).await?;
+    let sources = crate::persistence::import::sources(pool).await?;
+    let already_imported_batch_id =
+        crate::persistence::import::batch_by_hash(pool, &workbook.source_hash)
+            .await?
+            .map(|batch| batch.id);
+    let previous_fields = match &draft.source_origin_id {
+        Some(origin) => crate::persistence::import::field_mappings(pool, origin).await?,
+        None => BTreeMap::new(),
+    };
+    let identities = match &draft.source_origin_id {
+        Some(origin) => crate::persistence::import::catalogue_identities(pool, origin).await?,
+        None => Vec::new(),
+    };
+    let prior_loans = match &draft.source_origin_id {
+        Some(origin) => crate::persistence::import::loan_identities(pool, origin).await?,
+        None => Vec::new(),
+    };
+    let prior_tasks = match &draft.source_origin_id {
+        Some(origin) => crate::persistence::import::task_identities(pool, origin).await?,
+        None => Vec::new(),
+    };
     let review_payload = serde_json::to_vec(&(
         &workbook.source_hash,
         &draft,
         &existing_details,
         &people.people,
         &definitions,
+        &prior_loans,
+        &prior_tasks,
+        &previous_fields,
+        &identities,
+        &sources,
     ))
     .map_err(|_| AppError::validation("The import preview could not be prepared."))?;
     let review_hash = xlsx_reader::hash(&review_payload);
     let mut warnings = Vec::new();
     let mut errors = Vec::new();
+    if draft
+        .source_origin_id
+        .as_ref()
+        .is_some_and(|id| !sources.iter().any(|source| &source.id == id))
+    {
+        errors.push("The selected previous import source does not exist.".into());
+    }
     for mapping in [&draft.people.carly]
         .into_iter()
         .chain(draft.people.mom.iter())
@@ -646,15 +680,33 @@ pub async fn preview(
         if let Err(error) = book.clone().validate() {
             row_errors.push(error.message);
         }
-        let existing_candidates = candidates(&book.title, book.authors.as_deref(), &existing);
+        let mut existing_candidates = candidates(&book.title, book.authors.as_deref(), &existing);
+        let (prior_target, prior_candidates) = previous_catalogue_target(
+            &identities,
+            &row.source,
+            &book,
+            row.text("Source / Original Title").as_deref(),
+        );
+        for id in prior_candidates {
+            if !existing_candidates
+                .iter()
+                .any(|candidate| candidate.id == id)
+            {
+                if let Some(book) = existing.iter().find(|book| book.id == id) {
+                    existing_candidates.push(book.clone());
+                }
+            }
+        }
         let chosen = target(
             &draft,
             &row.source.key,
-            if existing_candidates.is_empty() {
-                BookTarget::New
-            } else {
-                BookTarget::Unresolved
-            },
+            prior_target.unwrap_or({
+                if existing_candidates.is_empty() {
+                    BookTarget::New
+                } else {
+                    BookTarget::Unresolved
+                }
+            }),
         );
         let mut fill_fields = Vec::new();
         let mut preserve_fields = Vec::new();
@@ -800,7 +852,17 @@ pub async fn preview(
             .map(|row| row.source.key.clone())
             .collect();
         let candidates = candidates(&title, author.as_deref(), &existing);
-        let default = if catalogue_candidates.len() == 1 {
+        let known_loan = prior_loans
+            .iter()
+            .find(|loan| loan.source_row_key == row.source.key);
+        let default = if let Some(loan) = known_loan {
+            loan.book_id
+                .as_ref()
+                .map(|id| BookTarget::Existing {
+                    book_id: id.clone(),
+                })
+                .unwrap_or(BookTarget::Unresolved)
+        } else if catalogue_candidates.len() == 1 {
             BookTarget::Catalogue {
                 row_key: catalogue_candidates[0].clone(),
             }
@@ -808,6 +870,20 @@ pub async fn preview(
             BookTarget::Unresolved
         };
         let chosen = target(&draft, &row.source.key, default);
+        if let Some(loan) = known_loan {
+            let expected = loan
+                .book_id
+                .as_ref()
+                .map(|id| BookTarget::Existing {
+                    book_id: id.clone(),
+                })
+                .unwrap_or(BookTarget::Unresolved);
+            if crate::persistence::import::encode(&chosen)?
+                != crate::persistence::import::encode(&expected)?
+            {
+                errors.push(format!("History row {} already has a saved historical record. Keep its existing link here; changes can be reviewed in Import History after import.", row.source.row_number));
+            }
+        }
         if matches!(chosen, BookTarget::Unresolved) {
             row.warn(&mut row_warnings, "unlinked_borrow", "Title", "No unique catalogue match is established. Keep this historical record unlinked or explicitly choose a book; no fuzzy merge is performed.");
         }
@@ -829,12 +905,30 @@ pub async fn preview(
             target: chosen,
             warnings: row_warnings,
             errors: Vec::new(),
+            existing_loan_id: known_loan.map(|loan| loan.id.clone()),
+            existing_book_id: known_loan.and_then(|loan| loan.book_id.clone()),
         });
     }
     let mut title_reviews = Vec::new();
+    let mut title_occurrences: HashMap<String, usize> = HashMap::new();
     for row in mapped.remove(TITLES).unwrap_or_default() {
         let working_title = row.text("Working Title").unwrap_or_default();
         let author = row.author();
+        let anchor = xlsx_reader::hash(
+            serde_json::to_string(&(
+                normalize(&working_title),
+                normalize(author.as_deref().unwrap_or("")),
+                normalize(row.text("Exactly as PDF shows").as_deref().unwrap_or("")),
+            ))
+            .map_err(|_| AppError::validation("Invalid title source evidence."))?
+            .as_bytes(),
+        );
+        let occurrence = title_occurrences.entry(anchor.clone()).or_default();
+        *occurrence += 1;
+        let identity_key = xlsx_reader::hash(format!("title:{anchor}:{occurrence}").as_bytes());
+        let known_task = prior_tasks
+            .iter()
+            .find(|task| task.source_row_key == identity_key);
         let catalogue_candidates: Vec<String> = catalogue
             .iter()
             .filter(|candidate| {
@@ -845,7 +939,14 @@ pub async fn preview(
             .map(|row| row.source.key.clone())
             .collect();
         let candidates = candidates(&working_title, author.as_deref(), &existing);
-        let default = if catalogue_candidates.len() == 1 {
+        let default = if let Some(task) = known_task {
+            task.book_id
+                .as_ref()
+                .map(|id| BookTarget::Existing {
+                    book_id: id.clone(),
+                })
+                .unwrap_or(BookTarget::Unresolved)
+        } else if catalogue_candidates.len() == 1 {
             BookTarget::Catalogue {
                 row_key: catalogue_candidates[0].clone(),
             }
@@ -853,13 +954,46 @@ pub async fn preview(
             BookTarget::Unresolved
         };
         let chosen = target(&draft, &row.source.key, default);
+        if let Some(task) = known_task {
+            let expected = task
+                .book_id
+                .as_ref()
+                .map(|id| BookTarget::Existing {
+                    book_id: id.clone(),
+                })
+                .unwrap_or(BookTarget::Unresolved);
+            if crate::persistence::import::encode(&chosen)?
+                != crate::persistence::import::encode(&expected)?
+            {
+                errors.push(format!("Title row {} already has a saved verification task. Keep its existing link here; review link changes in Title Verification.", row.source.row_number));
+            }
+        }
         let accept_confirmed_title = draft
             .decisions
             .iter()
             .find(|decision| decision.row_key == row.source.key)
             .is_some_and(|decision| decision.accept_confirmed_title);
+        if accept_confirmed_title {
+            if known_task.is_some_and(|task| task.state != "open") {
+                errors.push(format!("Title row {} is already resolved. Review further corrections in Title Verification.", row.source.row_number));
+            }
+            match row.text("Confirmed Full Title (edit here)") {
+                Some(title)
+                    if (BookDraft {
+                        title: title.clone(),
+                        ..Default::default()
+                    })
+                    .validate()
+                    .is_ok() => {}
+                _ => errors.push(format!(
+                    "Title row {} needs a valid confirmed title before applying a correction.",
+                    row.source.row_number
+                )),
+            }
+        }
         title_reviews.push(TitleReviewRow {
             source: row.source.clone(),
+            identity_key,
             working_title,
             author,
             raw_pdf_title: row.text("Exactly as PDF shows"),
@@ -869,10 +1003,22 @@ pub async fn preview(
             candidates,
             target: chosen,
             accept_confirmed_title,
+            existing_task_id: known_task.map(|task| task.id.clone()),
+            existing_state: known_task.map(|task| task.state.clone()),
         });
     }
     for row in &catalogue {
-        let reconstructed = history.iter().filter(|history| matches!(&history.target, BookTarget::Catalogue { row_key } if row_key == &row.source.key)).count() as i64;
+        let reconstructed = history
+            .iter()
+            .filter(|history| match (&row.target, &history.target) {
+                (BookTarget::Skip, _) => false,
+                (_, BookTarget::Catalogue { row_key }) => row_key == &row.source.key,
+                (BookTarget::Existing { book_id }, BookTarget::Existing { book_id: other }) => {
+                    book_id == other
+                }
+                _ => false,
+            })
+            .count() as i64;
         if row
             .borrow_count
             .is_some_and(|baseline| baseline != reconstructed)
@@ -880,7 +1026,43 @@ pub async fn preview(
             warnings.push(warning("borrow_count_mismatch", Some(CATALOGUE), Some(row.source.row_number), Some("Borrow Count"), &format!("The source baseline is {}, while {reconstructed} history rows currently match. The baseline is preserved; missing transactions are not fabricated.", row.borrow_count.unwrap_or_default())));
         }
     }
-    let fields = field_proposals(&catalogue, &definitions, &draft, &mut errors);
+    let fields = field_proposals(
+        &catalogue,
+        &definitions,
+        &draft,
+        &mut errors,
+        &previous_fields,
+    );
+    for field in &fields {
+        for choice in &field.choices {
+            if crate::domain::person_name(choice).is_err() {
+                warnings.push(warning("unsupported_choice", Some(CATALOGUE), None, Some(&field.label), "A source choice exceeds the supported label limits. It is retained in provenance without a custom value."));
+            }
+        }
+        if let Some(definition) = definitions
+            .iter()
+            .find(|definition| Some(&definition.id) == field.existing_field_id.as_ref())
+        {
+            if definition.draft.options.iter().any(|option| !option.active) {
+                warnings.push(warning("retired_choices", Some(CATALOGUE), None, Some(&field.label), "This mapped field has retired choices. Source values mapped to retired IDs stay in provenance; those choices are not reactivated."));
+            }
+            for row in &catalogue {
+                let text = match field.source_key.as_str() {
+                    "age_range" => &row.age_range,
+                    "reading_effort" => &row.reading_effort,
+                    _ => continue,
+                };
+                if text.as_ref().is_some_and(|text| {
+                    definition
+                        .draft
+                        .validate_value(&serde_json::Value::String(text.clone()), false)
+                        .is_err()
+                }) {
+                    warnings.push(warning("unsupported_custom_value", Some(CATALOGUE), Some(row.source.row_number), Some(&field.label), "The source value does not fit this field's validation rules. It is retained in provenance without replacing the existing value."));
+                }
+            }
+        }
+    }
     let requires_title_decisions = catalogue
         .iter()
         .filter(|row| matches!(row.target, BookTarget::Unresolved))
@@ -929,5 +1111,110 @@ pub async fn preview(
         missing_sheets,
         requires_title_decisions,
         preserved_manual_values,
+        sources,
+        already_imported_batch_id,
     })
+}
+
+fn previous_catalogue_target(
+    identities: &[CatalogueIdentity],
+    source: &SourceRow,
+    book: &BookDraft,
+    original: Option<&str>,
+) -> (Option<BookTarget>, Vec<String>) {
+    if let Some(previous) = identities
+        .iter()
+        .find(|identity| identity.source_row_key == source.key)
+    {
+        return (
+            Some(if previous.skipped {
+                BookTarget::Skip
+            } else {
+                previous
+                    .book_id
+                    .as_ref()
+                    .map(|id| BookTarget::Existing {
+                        book_id: id.clone(),
+                    })
+                    .unwrap_or(BookTarget::Unresolved)
+            }),
+            previous.book_id.iter().cloned().collect(),
+        );
+    }
+    let anchors: Vec<_> = identities
+        .iter()
+        .filter(|identity| {
+            normalize(identity.source_author.as_deref().unwrap_or(""))
+                == normalize(book.authors.as_deref().unwrap_or(""))
+                && (original.is_some_and(|original| {
+                    identity
+                        .original_title
+                        .as_deref()
+                        .is_some_and(|previous| normalize(previous) == normalize(original))
+                }) || normalize(&identity.source_title) == normalize(&book.title))
+        })
+        .collect();
+    let ids: HashSet<_> = anchors
+        .iter()
+        .filter_map(|identity| identity.book_id.clone())
+        .collect();
+    if ids.len() == 1 && anchors.iter().all(|identity| !identity.skipped) {
+        let id = ids.iter().next().cloned().unwrap_or_default();
+        return (
+            Some(BookTarget::Existing {
+                book_id: id.clone(),
+            }),
+            vec![id],
+        );
+    }
+    if !anchors.is_empty() {
+        return (Some(BookTarget::Unresolved), ids.into_iter().collect());
+    }
+    let candidates: Vec<_> = identities
+        .iter()
+        .filter(|identity| identity.source_row_number == source.row_number as i64)
+        .filter_map(|identity| identity.book_id.clone())
+        .collect();
+    if candidates.is_empty() {
+        (None, Vec::new())
+    } else {
+        (Some(BookTarget::Unresolved), candidates)
+    }
+}
+
+pub async fn initial_draft(
+    pool: &SqlitePool,
+    source_name: &str,
+    token: &str,
+) -> Result<ImportReviewDraft, AppError> {
+    let mut draft = ImportReviewDraft::initial(token);
+    let sources = crate::persistence::import::sources(pool).await?;
+    let people = household::list(pool).await?;
+    let matching: Vec<_> = sources
+        .iter()
+        .filter(|source| normalize(&source.last_filename) == normalize(source_name))
+        .collect();
+    if matching.len() == 1 {
+        let source = matching[0];
+        draft.source_origin_id = Some(source.id.clone());
+        if people
+            .people
+            .iter()
+            .any(|person| person.id == source.carly_person_id && person.archived_at.is_none())
+        {
+            draft.people.carly = PersonMapping::Existing {
+                id: source.carly_person_id.clone(),
+            };
+        }
+        if let Some(id) = &source.mom_person_id {
+            if people
+                .people
+                .iter()
+                .any(|person| &person.id == id && person.archived_at.is_none())
+            {
+                draft.people.mom = Some(PersonMapping::Existing { id: id.clone() });
+            }
+        }
+    }
+    Ok(draft)
 }

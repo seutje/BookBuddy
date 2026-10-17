@@ -1,7 +1,7 @@
 use super::AppState;
 use crate::{
     domain::{import::*, AppError},
-    services::{import_preview, xlsx_reader},
+    services::{import_commit, import_history, import_preview, xlsx_reader},
 };
 use std::path::PathBuf;
 use tauri::{AppHandle, State};
@@ -46,7 +46,9 @@ pub async fn choose_library_xlsx(
         return Ok(None);
     };
     let token = uuid::Uuid::new_v4().to_string();
-    let draft = ImportReviewDraft::initial(&token);
+    let draft =
+        import_preview::initial_draft(state.database()?, &selected.data.source_name, &token)
+            .await?;
     let preview = import_preview::preview(state.database()?, &selected.data, draft).await?;
     let mut registry = state
         .workbooks
@@ -76,4 +78,83 @@ pub async fn preview_library_xlsx_mapping(
 ) -> Result<ImportPreview, AppError> {
     let selected = selection(&state, &draft.selection_token)?;
     import_preview::preview(state.database()?, &selected.data, draft).await
+}
+
+#[tauri::command]
+pub async fn commit_library_xlsx_import(
+    state: State<'_, AppState>,
+    draft: ImportReviewDraft,
+    review_hash: String,
+) -> Result<ImportSummary, AppError> {
+    let selected = selection(&state, &draft.selection_token)?;
+    let directory = state
+        .data_path
+        .as_deref()
+        .ok_or_else(|| AppError::validation("The local data directory is unavailable."))?;
+    import_commit::commit(
+        state.database()?,
+        directory,
+        &selected.path,
+        &selected.data,
+        draft,
+        &review_hash,
+    )
+    .await
+}
+#[tauri::command]
+pub async fn list_import_batches(
+    state: State<'_, AppState>,
+) -> Result<Vec<ImportBatchInfo>, AppError> {
+    import_history::batches(state.database()?).await
+}
+#[tauri::command]
+pub async fn list_import_rows(
+    state: State<'_, AppState>,
+    batch_id: String,
+) -> Result<Vec<ImportedRowInfo>, AppError> {
+    import_history::rows(state.database()?, &batch_id).await
+}
+#[tauri::command]
+pub async fn list_title_verification_tasks(
+    state: State<'_, AppState>,
+    include_resolved: bool,
+) -> Result<Vec<TitleTask>, AppError> {
+    import_history::tasks(state.database()?, include_resolved).await
+}
+#[tauri::command]
+pub async fn resolve_title_verification(
+    state: State<'_, AppState>,
+    id: String,
+    resolution: TitleResolution,
+) -> Result<(), AppError> {
+    import_history::resolve_title(state.database()?, &id, resolution).await
+}
+#[tauri::command]
+pub async fn list_historical_loans(
+    state: State<'_, AppState>,
+    book_id: Option<String>,
+) -> Result<Vec<HistoricalLoan>, AppError> {
+    import_history::loans(state.database()?, book_id.as_deref()).await
+}
+#[tauri::command]
+pub async fn get_borrow_summary(
+    state: State<'_, AppState>,
+    book_id: String,
+) -> Result<Option<BorrowSummary>, AppError> {
+    import_history::baseline(state.database()?, &book_id).await
+}
+#[tauri::command]
+pub async fn link_historical_loan(
+    state: State<'_, AppState>,
+    id: String,
+    book_id: String,
+    expected_book_id: Option<String>,
+) -> Result<(), AppError> {
+    import_history::link_loan(
+        state.database()?,
+        &id,
+        &book_id,
+        expected_book_id.as_deref(),
+    )
+    .await
 }

@@ -1,6 +1,6 @@
 # BookBuddy — Implementation Plan
 
-**Status:** Phases 0–5 verified; Phase 6 next
+**Status:** Phases 0-6 verified; Phase 7 next
 **Target:** Offline-only Windows desktop (Rust + Tauri 2 + React + TypeScript + SQLite)  
 **Source of truth:** [DESIGN.md](DESIGN.md)  
 **Agent rules:** [AGENTS.md](AGENTS.md)
@@ -97,16 +97,18 @@ Phase 5 verification (2026-10-17): `npm run check` passed with thirty-five regul
 
 ## Phase 6 — XLSX importer: safe commit and verification
 
-- [ ] Create import batch/source-row provenance and stable deduplication identity for exact reimport, including repeated identical-looking history rows.
-- [ ] Implement reviewed resolution for confirmed matches, ambiguous matches, duplicate candidate books and title-correction proposals.
-- [ ] Implement new vs existing value policy: keep later manual edits by default; imported blanks never erase filled values.
-- [ ] Recheck selected file hash immediately before commit to detect changes since preview.
-- [ ] Take pre-import recovery backup and commit linked book/person/field/history/task changes in a transaction; roll back on error.
-- [ ] Implement visible import summary and Import History; expose Needs title verification filter and resolution workflow.
-- [ ] Verify sample-data invariants: 312 catalog rows, 253 history rows, 35 title-review rows, 66 owned and 3 currently borrowed as observed; never manufacture reading events or missing ratings.
-- [ ] Verify exact same workbook twice gives no extra rows; deliberate repeated loans remain separate distinct source events.
-- [ ] Verify corrected-title/revised-workbook import previews changes without silently losing user edits.
-- [ ] **Exit gate:** provided workbook imports locally and loss-aware, is safely repeatable and remains traceable to its rows.
+- [x] Create import batch/source-row provenance and stable deduplication identity for exact reimport, including repeated identical-looking history rows.
+- [x] Implement reviewed resolution for confirmed matches, ambiguous matches, duplicate candidate books and title-correction proposals.
+- [x] Implement new vs existing value policy: keep later manual edits by default; imported blanks never erase filled values.
+- [x] Recheck selected file hash immediately before commit to detect changes since preview.
+- [x] Take pre-import recovery backup and commit linked book/person/field/history/task changes in a transaction; roll back on error.
+- [x] Implement visible import summary and Import History; expose Needs title verification filter and resolution workflow.
+- [x] Verify sample-data invariants: 312 catalog rows, 253 history rows, 35 title-review rows, 66 owned and 3 currently borrowed as observed; never manufacture reading events or missing ratings.
+- [x] Verify exact same workbook twice gives no extra rows; deliberate repeated loans remain separate distinct source events.
+- [x] Verify corrected-title/revised-workbook import previews changes without silently losing user edits.
+- [x] **Exit gate:** provided workbook imports locally and loss-aware, is safely repeatable and remains traceable to its rows.
+
+Phase 6 verification (2026-10-17): `npm run check` passed with forty-one regular Rust tests. Six commit/review tests cover provenance, exact repeat, identical loan occurrences, source revisions, stable field/choice identities, preserved manual values, title correction, stale review/link rejection, hash changes both before and during a transaction, rollback and a WAL-safe pre-import snapshot. The opt-in private-workbook commit/repeat test passed the documented 312/253/35/66/3/37 counts with no fabricated readings or ratings in a disposable database. `scripts/smoke-import-commit.ps1` passed on Windows with external WebView requests blocked: native selection, confirmation, summary/history, title queue, repeat and restart. ADR 0007 records identity and conflict policies.
 
 ## Phase 7 — Backups, restores and data safety
 

@@ -30,6 +30,14 @@ fn main() {
             "delete_reading",
             "choose_library_xlsx",
             "preview_library_xlsx_mapping",
+            "commit_library_xlsx_import",
+            "list_import_batches",
+            "list_import_rows",
+            "list_title_verification_tasks",
+            "resolve_title_verification",
+            "list_historical_loans",
+            "get_borrow_summary",
+            "link_historical_loan",
         ]),
     ))
     .expect("Tauri build configuration failed");

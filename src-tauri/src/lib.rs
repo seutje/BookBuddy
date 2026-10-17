@@ -22,6 +22,7 @@ pub fn run() {
                 .and_then(|path| tauri::async_runtime::block_on(persistence::open(path)).ok());
             app.manage(commands::AppState {
                 pool,
+                data_path: directory.clone(),
                 data_directory: directory.map(|path| path.to_string_lossy().into_owned()),
                 workbooks: std::sync::Mutex::new(std::collections::HashMap::new()),
             });
@@ -56,7 +57,15 @@ pub fn run() {
             commands::readings::edit_reading,
             commands::readings::delete_reading,
             commands::import::choose_library_xlsx,
-            commands::import::preview_library_xlsx_mapping
+            commands::import::preview_library_xlsx_mapping,
+            commands::import::commit_library_xlsx_import,
+            commands::import::list_import_batches,
+            commands::import::list_import_rows,
+            commands::import::list_title_verification_tasks,
+            commands::import::resolve_title_verification,
+            commands::import::list_historical_loans,
+            commands::import::get_borrow_summary,
+            commands::import::link_historical_loan
         ])
         .build(tauri::generate_context!())
         .expect("BookBuddy could not start; existing data has been preserved")

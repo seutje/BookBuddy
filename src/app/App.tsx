@@ -8,6 +8,7 @@ import { Library } from "../features/library/Library";
 import { Settings } from "../features/settings/Settings";
 import { Activity } from "../features/activity/Activity";
 import { ImportWizard } from "../features/import/ImportWizard";
+import type { ImportSummary } from "../lib/import";
 
 const pages = ["Library", "Activity", "People", "Settings"] as const;
 type Page = (typeof pages)[number];
@@ -42,6 +43,12 @@ export function App() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["household"] });
     },
+  });
+  const lastImport = useQuery<ImportSummary | null>({
+    queryKey: ["lastImport"],
+    queryFn: () => Promise.resolve(null),
+    initialData: null,
+    enabled: false,
   });
   const people = household.data?.people ?? [];
   const active = people.filter((person) => !person.archivedAt);
@@ -108,6 +115,13 @@ export function App() {
           <p role="status">Opening your local library…</p>
         ) : (
           <>
+            {lastImport.data && (
+              <p role="status" className="notice">
+                {lastImport.data.alreadyImported
+                  ? "This unchanged workbook was already imported. No records were added."
+                  : `Import complete: ${lastImport.data.booksAdded} books added, ${lastImport.data.booksUpdated} updated, ${lastImport.data.historicalLoansAdded} historical loans added, ${lastImport.data.sourceRowsSaved} source rows retained. ${lastImport.data.unresolvedTitleTasks} title tasks need review. A pre-import recovery snapshot was saved.`}
+              </p>
+            )}
             {action.error && (
               <p role="alert" className="error">
                 {errorMessage(action.error)}

@@ -111,7 +111,7 @@ pub fn family() -> Vec<(String, Vec<Vec<Cell>>)> {
     first[3] = Cell::Number(2020.0);
     first[4] = text("Read");
     first[5] = text("Yes");
-    first[8] = text("Yes");
+    first[8] = Cell::Boolean(true);
     first[9] = text("Purchased");
     first[10] = Cell::Number(3.0);
     first[11] = Cell::Date(45000.0);

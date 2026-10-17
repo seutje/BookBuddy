@@ -231,6 +231,31 @@ export function Library({ current }: { current: Person | undefined }) {
                 </select>
               </label>
               <label>
+                Title verification
+                <select
+                  value={
+                    filter.needsTitleVerification == null
+                      ? "any"
+                      : filter.needsTitleVerification
+                        ? "yes"
+                        : "no"
+                  }
+                  onChange={(event) =>
+                    setFilter({
+                      ...filter,
+                      needsTitleVerification:
+                        event.target.value === "any"
+                          ? null
+                          : event.target.value === "yes",
+                    })
+                  }
+                >
+                  <option value="any">Any title</option>
+                  <option value="yes">Needs title verification</option>
+                  <option value="no">No open title review</option>
+                </select>
+              </label>
+              <label>
                 Logged readings
                 <select
                   value={
@@ -315,6 +340,11 @@ export function Library({ current }: { current: Person | undefined }) {
                         {book.title}
                       </button>
                       <p>{book.authors ?? "Author unknown"}</p>
+                      {book.needsTitleVerification && (
+                        <p className="notice">
+                          Needs title verification · review in Settings
+                        </p>
+                      )}
                       <p className="muted">
                         Household:{" "}
                         {book.owned === null

@@ -3,7 +3,7 @@ use crate::domain::{books::*, AppError};
 use sqlx::{QueryBuilder, Sqlite, SqlitePool, Transaction};
 use std::collections::HashMap;
 
-const BOOK_PROJECTION: &str = "SELECT b.*, (SELECT COUNT(*) FROM reading_event e WHERE e.book_id = b.id) AS read_count, (SELECT MAX(e.occurred_on) FROM reading_event e WHERE e.book_id = b.id) AS last_read_on FROM book b";
+const BOOK_PROJECTION: &str = "SELECT b.*, (SELECT COUNT(*) FROM reading_event e WHERE e.book_id = b.id) AS read_count, (SELECT MAX(e.occurred_on) FROM reading_event e WHERE e.book_id = b.id) AS last_read_on, (b.needs_title_verification = 1 OR EXISTS (SELECT 1 FROM book_title_verification t WHERE t.book_id = b.id AND t.state = 'open')) AS has_title_verification FROM book b";
 const MEMBERSHIP_PROJECTION: &str = "SELECT pb.*, p.display_name AS person_name, p.archived_at, (SELECT COUNT(*) FROM reading_event e JOIN reading_event_participant ep ON ep.event_id = e.id WHERE e.book_id = pb.book_id AND ep.person_id = pb.person_id) AS read_count, (SELECT MAX(e.occurred_on) FROM reading_event e JOIN reading_event_participant ep ON ep.event_id = e.id WHERE e.book_id = pb.book_id AND ep.person_id = pb.person_id) AS last_read_on FROM person_book pb JOIN person p ON p.id = pb.person_id WHERE (? IS NULL OR pb.book_id = ?) ORDER BY p.created_at, p.id";
 
 pub async fn all(pool: &SqlitePool) -> Result<Vec<BookDetail>, AppError> {
@@ -14,6 +14,9 @@ pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<Book
     let mut transaction = pool.begin().await?;
     let mut query = QueryBuilder::<Sqlite>::new(BOOK_PROJECTION);
     query.push(" WHERE 1 = 1");
+    if let Some(needs_review) = filter.needs_title_verification {
+        query.push(if needs_review { " AND (b.needs_title_verification = 1 OR EXISTS (SELECT 1 FROM book_title_verification t WHERE t.book_id = b.id AND t.state = 'open'))" } else { " AND NOT (b.needs_title_verification = 1 OR EXISTS (SELECT 1 FROM book_title_verification t WHERE t.book_id = b.id AND t.state = 'open'))" });
+    }
     let definitions = super::custom_fields::definitions_in(&mut transaction).await?;
     let custom = resolve_filters(&definitions, &filter.custom_filters)?;
     for (definition, filter) in custom
@@ -129,15 +132,7 @@ pub async fn filtered(pool: &SqlitePool, filter: &BookFilter) -> Result<Vec<Book
 
 pub async fn get(pool: &SqlitePool, id: &str) -> Result<BookDetail, AppError> {
     let mut transaction = pool.begin().await?;
-    let mut query = QueryBuilder::<Sqlite>::new(BOOK_PROJECTION);
-    query.push(" WHERE b.id = ").push_bind(id);
-    let book = query
-        .build_query_as::<Book>()
-        .fetch_optional(&mut *transaction)
-        .await?
-        .ok_or_else(|| {
-            AppError::validation("That book could not be found. Refresh the library.")
-        })?;
+    let book = book_in(&mut transaction, id).await?;
     let memberships = sqlx::query_as::<_, Membership>(MEMBERSHIP_PROJECTION)
         .bind(id)
         .bind(id)
@@ -150,6 +145,22 @@ pub async fn get(pool: &SqlitePool, id: &str) -> Result<BookDetail, AppError> {
         row_fields: Vec::new(),
         custom_search: Vec::new(),
     })
+}
+
+pub async fn book_in(
+    transaction: &mut Transaction<'_, Sqlite>,
+    id: &str,
+) -> Result<Book, AppError> {
+    let mut query = QueryBuilder::<Sqlite>::new(BOOK_PROJECTION);
+    query.push(" WHERE b.id = ").push_bind(id);
+    let book = query
+        .build_query_as::<Book>()
+        .fetch_optional(&mut **transaction)
+        .await?
+        .ok_or_else(|| {
+            AppError::validation("That book could not be found. Refresh the library.")
+        })?;
+    Ok(book)
 }
 
 pub async fn require_book(

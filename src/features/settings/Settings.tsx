@@ -1,5 +1,6 @@
 import { FieldManager } from "../custom-fields/FieldManager";
 import { ImportWizard } from "../import/ImportWizard";
+import { ImportHistory } from "../import/ImportHistory";
 
 export function Settings({ dataDirectory }: { dataDirectory: string | null }) {
   return (
@@ -7,6 +8,7 @@ export function Settings({ dataDirectory }: { dataDirectory: string | null }) {
       <h1>Settings</h1>
       <FieldManager />
       <ImportWizard />
+      <ImportHistory />
       <section className="personal-panel">
         <h2>Your local data</h2>
         <p>

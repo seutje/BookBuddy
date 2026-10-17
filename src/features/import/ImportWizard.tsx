@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, errorMessage } from "../../lib/api";
 import type { Person } from "../../lib/api";
 import {
@@ -17,6 +17,7 @@ import type {
   HeaderOverride,
   ImportPreview,
   ImportReviewDraft,
+  ImportSummary,
   PersonMapping,
   RowDecision,
   SourceRow,
@@ -211,6 +212,9 @@ function targetName(target: BookTarget) {
 }
 
 export function ImportWizard() {
+  const client = useQueryClient();
+  const [confirmed, setConfirmed] = useState(false);
+  const [summary, setSummary] = useState<ImportSummary | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [draft, setDraft] = useState<ImportReviewDraft | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -240,11 +244,28 @@ export function ImportWizard() {
       setPreview(preview);
       setDraft(preview?.draft ?? null);
       setDirty(false);
+      setConfirmed(false);
+    },
+  });
+  const commit = useMutation({
+    mutationFn: () => {
+      if (!preview || !draft || dirty)
+        throw new Error("Refresh the import preview first.");
+      return importApi.commit(draft, preview.reviewHash);
+    },
+    onSuccess: async (result) => {
+      setSummary(result);
+      client.setQueryData(["lastImport"], result);
+      setPreview(null);
+      setDraft(null);
+      setConfirmed(false);
+      await client.invalidateQueries();
     },
   });
   function change(next: ImportReviewDraft) {
     setDraft(next);
     setDirty(true);
+    setConfirmed(false);
   }
   function decision(
     rowKey: string,
@@ -301,13 +322,28 @@ export function ImportWizard() {
         Choose the family-library workbook from this computer. Inspection and
         preview leave your library unchanged.
       </p>
+      {summary && (
+        <p role="status" className="notice">
+          {summary.alreadyImported
+            ? "This unchanged workbook was already imported. No records were added."
+            : `Import complete: ${summary.booksAdded} books added, ${summary.booksUpdated} updated, ${summary.historicalLoansAdded} historical loans added, ${summary.sourceRowsSaved} source rows retained. ${summary.unresolvedTitleTasks} title tasks need review. A pre-import recovery snapshot was saved.`}
+        </p>
+      )}
+      {commit.error && (
+        <p role="alert" className="error">
+          {errorMessage(commit.error)}
+        </p>
+      )}
       {action.error && (
         <p role="alert" className="error">
           {errorMessage(action.error)}
         </p>
       )}
       {preview && draft && (
-        <fieldset className="plain-fieldset" disabled={action.isPending}>
+        <fieldset
+          className="plain-fieldset"
+          disabled={action.isPending || commit.isPending}
+        >
           <h3>{preview.sourceName}</h3>
           <p role="status">{`${preview.counts.catalogue} catalogue rows · ${preview.counts.historicalLoans} historical borrowing rows · ${preview.counts.titleReviews} title review rows`}</p>
           <p>{`${preview.counts.ownedYes} owned · ${preview.counts.currentlyBorrowed} currently borrowed · ${preview.counts.favouritesYes} favourite flags · ${preview.counts.momMemberships} Mom ratings`}</p>
@@ -350,6 +386,42 @@ export function ImportWizard() {
             </div>
           )}
           <h3>People mapping</h3>
+          <label>
+            Workbook source continuity
+            <select
+              value={draft.sourceOriginId ?? ""}
+              onChange={(event) => {
+                const source = preview.sources.find(
+                  (source) => source.id === event.target.value,
+                );
+                change({
+                  ...draft,
+                  sourceOriginId: source?.id ?? null,
+                  decisions: [],
+                  fields: [],
+                  people: source
+                    ? {
+                        carly: { mode: "existing", id: source.carlyPersonId },
+                        mom: source.momPersonId
+                          ? { mode: "existing", id: source.momPersonId }
+                          : null,
+                      }
+                    : draft.people,
+                });
+              }}
+            >
+              <option value="">A separate workbook source</option>
+              {preview.sources.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.label} · {source.createdAt}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p>
+            For a revised workbook, select its previous source to retain row
+            identities and reviewed links.
+          </p>
           <div className="form-grid">
             <PersonMappingInput
               label="Carly"
@@ -695,6 +767,8 @@ export function ImportWizard() {
                         type="checkbox"
                         checked={accept}
                         disabled={
+                          (row.existingState !== null &&
+                            row.existingState !== "open") ||
                           selected.mode === "unresolved" ||
                           selected.mode === "skip"
                         }
@@ -759,6 +833,21 @@ export function ImportWizard() {
             >
               Refresh import preview
             </button>
+            {!dirty &&
+              (preview.alreadyImportedBatchId ||
+                (preview.blockingErrors.length === 0 &&
+                  preview.requiresTitleDecisions === 0 &&
+                  (preview.warnings.length === 0 ||
+                    draft.acknowledgeWarnings) &&
+                  (draft.acknowledgeMissingSheets ||
+                    !preview.missingSheets.some(
+                      (sheet) =>
+                        sheet === "Library History" || sheet === "Check Titles",
+                    )))) && (
+                <button onClick={() => setConfirmed(true)}>
+                  Review final import
+                </button>
+              )}
             <button
               className="quiet"
               disabled={action.isPending}
@@ -771,6 +860,22 @@ export function ImportWizard() {
               Close preview
             </button>
           </div>
+          {confirmed && !dirty && (
+            <section className="notice" aria-labelledby="final-import-heading">
+              <h3 id="final-import-heading">Confirm local import</h3>
+              <p>
+                {preview.alreadyImportedBatchId
+                  ? "This exact workbook is already recorded. Checking it again adds no records."
+                  : `${preview.counts.catalogue} catalogue rows, ${preview.counts.historicalLoans} historical borrowing rows and ${preview.counts.titleReviews} title review rows will be processed using the reviewed mappings. Existing populated values stay as they are, except title corrections you explicitly selected. A recovery snapshot is taken first; any failure rolls back the import.`}
+              </p>
+              <button
+                disabled={commit.isPending}
+                onClick={() => commit.mutate()}
+              >
+                {commit.isPending ? "Importing locally…" : "Confirm import"}
+              </button>
+            </section>
+          )}
         </fieldset>
       )}
     </section>

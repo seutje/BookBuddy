@@ -14,6 +14,7 @@ use tauri::State;
 pub struct AppState {
     pub pool: Option<SqlitePool>,
     pub data_directory: Option<String>,
+    pub data_path: Option<std::path::PathBuf>,
     pub workbooks: std::sync::Mutex<std::collections::HashMap<String, import::SelectedWorkbook>>,
 }
 

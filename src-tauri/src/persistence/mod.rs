@@ -2,7 +2,9 @@
 pub mod books;
 pub mod custom_fields;
 pub mod household;
+pub mod import;
 pub mod readings;
+pub mod snapshots;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use sqlx::SqlitePool;
 use std::{path::Path, time::Duration};

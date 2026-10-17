@@ -77,7 +77,7 @@ impl RawCell {
         (self.value.is_null() || self.text().trim().is_empty()) && self.formula.is_none()
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct RawSheet {
     pub name: String,
     pub start_row: usize,
@@ -92,7 +92,7 @@ pub struct WorkbookData {
     pub sheets: Vec<RawSheet>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ImportWarning {
     pub code: String,
@@ -274,11 +274,14 @@ pub struct BorrowRow {
     pub target: BookTarget,
     pub warnings: Vec<ImportWarning>,
     pub errors: Vec<String>,
+    pub existing_loan_id: Option<String>,
+    pub existing_book_id: Option<String>,
 }
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TitleReviewRow {
     pub source: SourceRow,
+    pub identity_key: String,
     pub working_title: String,
     pub author: Option<String>,
     pub raw_pdf_title: Option<String>,
@@ -288,6 +291,8 @@ pub struct TitleReviewRow {
     pub candidates: Vec<Book>,
     pub target: BookTarget,
     pub accept_confirmed_title: bool,
+    pub existing_task_id: Option<String>,
+    pub existing_state: Option<String>,
 }
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -340,4 +345,173 @@ pub struct ImportPreview {
     pub missing_sheets: Vec<String>,
     pub requires_title_decisions: usize,
     pub preserved_manual_values: usize,
+    pub sources: Vec<ImportSource>,
+    pub already_imported_batch_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportSource {
+    pub id: String,
+    pub label: String,
+    pub last_filename: String,
+    pub carly_person_id: String,
+    pub mom_person_id: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportSummary {
+    pub batch_id: String,
+    pub origin_id: String,
+    pub already_imported: bool,
+    pub books_added: usize,
+    pub books_updated: usize,
+    pub catalogue_rows_skipped: usize,
+    pub people_created: usize,
+    pub memberships_created: usize,
+    pub historical_loans_added: usize,
+    pub historical_loans_reused: usize,
+    pub unlinked_loans: usize,
+    pub fields_created: usize,
+    pub custom_values_written: usize,
+    pub title_tasks_added: usize,
+    pub unresolved_title_tasks: usize,
+    pub source_rows_saved: usize,
+    pub warning_count: usize,
+    pub backup_name: Option<String>,
+    pub carly_person_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportBatchInfo {
+    pub id: String,
+    pub origin_id: String,
+    pub source_filename: String,
+    pub source_hash: String,
+    pub mapping_version: i64,
+    pub imported_at: String,
+    pub summary_json: String,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportedRowInfo {
+    pub id: String,
+    pub sheet_name: String,
+    pub sheet_row_number: i64,
+    pub raw_json: String,
+    pub warning_json: String,
+    pub book_id: Option<String>,
+    pub loan_id: Option<String>,
+    pub verification_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct TitleTask {
+    pub id: String,
+    pub book_id: Option<String>,
+    pub current_title: Option<String>,
+    pub working_title: String,
+    pub raw_pdf_title: Option<String>,
+    pub reason: Option<String>,
+    pub proposed_confirmed_title: Option<String>,
+    pub state: String,
+    pub source_row_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TitleResolution {
+    pub book_id: Option<String>,
+    pub confirmed_title: Option<String>,
+    pub expected_current_title: Option<String>,
+    pub expected_state: String,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoricalLoan {
+    pub id: String,
+    pub book_id: Option<String>,
+    pub current_title: Option<String>,
+    pub person_id: String,
+    pub person_name: String,
+    pub source_title: String,
+    pub source_author: Option<String>,
+    pub source_format: Option<String>,
+    pub publication_year: Option<i64>,
+    pub source_date_json: String,
+    pub date_interpretation: String,
+    pub date_precision: String,
+    pub source_pdf: Option<String>,
+    pub imported_row_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct BorrowSummary {
+    pub book_id: String,
+    pub imported_count_baseline: Option<i64>,
+    pub first_source_date_json: String,
+    pub latest_source_date_json: String,
+    pub source_date_type: Option<String>,
+    pub linked_history_count: i64,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct CatalogueIdentity {
+    pub source_row_key: String,
+    pub book_id: Option<String>,
+    pub skipped: bool,
+    pub original_title: Option<String>,
+    pub source_title: String,
+    pub source_author: Option<String>,
+    pub source_row_number: i64,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct LoanIdentity {
+    pub id: String,
+    pub source_row_key: String,
+    pub book_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct TaskIdentity {
+    pub id: String,
+    pub source_row_key: String,
+    pub book_id: Option<String>,
+    pub state: String,
+    pub proposed_confirmed_title: Option<String>,
+}
+
+pub fn fill_book(mut current: BookDraft, incoming: &BookDraft) -> (BookDraft, bool) {
+    fn fill<T: Clone>(current: &mut Option<T>, incoming: &Option<T>) -> bool {
+        if current.is_none() && incoming.is_some() {
+            *current = incoming.clone();
+            true
+        } else {
+            false
+        }
+    }
+    let mut changed = false;
+    macro_rules! fields { ($($field:ident),+) => { $(changed |= fill(&mut current.$field, &incoming.$field);)+ }; }
+    fields!(
+        subtitle,
+        authors,
+        isbn13,
+        publisher,
+        publication_year,
+        language,
+        series,
+        volume,
+        description,
+        notes,
+        owned
+    );
+    (current, changed)
 }

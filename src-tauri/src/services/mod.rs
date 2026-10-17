@@ -2,6 +2,8 @@
 pub mod books;
 pub mod custom_fields;
 pub mod household;
+pub mod import_commit;
+pub mod import_history;
 pub mod import_preview;
 pub mod readings;
 pub mod xlsx_reader;

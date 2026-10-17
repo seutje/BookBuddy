@@ -32,6 +32,14 @@
     "allow-edit-reading",
     "allow-delete-reading",
     "allow-choose-library-xlsx",
-    "allow-preview-library-xlsx-mapping"
+    "allow-preview-library-xlsx-mapping",
+    "allow-commit-library-xlsx-import",
+    "allow-list-import-batches",
+    "allow-list-import-rows",
+    "allow-list-title-verification-tasks",
+    "allow-resolve-title-verification",
+    "allow-list-historical-loans",
+    "allow-get-borrow-summary",
+    "allow-link-historical-loan"
   ]
 }

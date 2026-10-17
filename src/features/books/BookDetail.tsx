@@ -14,6 +14,7 @@ import { BookForm } from "./BookForm";
 import { PersonalForm } from "./PersonalForm";
 import { CustomFields } from "../custom-fields/CustomFields";
 import { ReadingHistory } from "../activity/ReadingHistory";
+import { HistoricalBorrowing } from "../import/ImportHistory";
 import { QuickReading } from "../activity/QuickReading";
 import { ReadingForm } from "../activity/ReadingForm";
 import { readingsApi } from "../../lib/readings";
@@ -239,6 +240,7 @@ export function BookDetail({
               </ul>
             )}
           </section>
+          <HistoricalBorrowing bookId={id} />
           <section className="personal-panel">
             <h2>Reading history</h2>
             <ReadingHistory

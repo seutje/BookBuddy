@@ -77,3 +77,8 @@ Never commit real workbooks, databases, backups or exports. `example/` is privat
 ignored input. Synthetic fixtures belong in `tests/` and must be explicitly allowed
 in `.gitignore` if their extension is otherwise excluded. No telemetry or cloud
 services are present. People in a household are labels, not private accounts.
+
+`scripts/smoke-import-commit.ps1` verifies transactional XLSX import, summary,
+provenance history, title queue, exact reimport and offline restart with the same
+public synthetic fixture. The private commit/repeat aggregate test is opt-in:
+`cargo test --manifest-path src-tauri/Cargo.toml --all-features --test xlsx_commit private_sample_commit -- --ignored`.

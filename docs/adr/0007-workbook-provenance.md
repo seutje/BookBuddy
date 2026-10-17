@@ -38,3 +38,14 @@ An exact source-file hash is idempotent. Never fabricate transactions to reconci
 source baseline borrow counts with incomplete reconstructed history.
 
 Reference: DESIGN §§15, 18. Safe commit and persistence are Phase 6 work.
+
+Phase 6 implementation: the source origin, original catalog identities and durable
+field/option mappings survive revised files and manual title/choice renames. A
+review task uses stable working-title/author/PDF evidence plus occurrence; editing
+its confirmed-title slot does not manufacture another task. Saved loan links and
+resolved task states are preserved on reimport. Post-import changes use explicit
+review with stale-state checks. All source sheets, original cell types, warnings,
+review choices and row links are retained. Fill-only merging treats false, zero
+and empty saved strings as populated. Pre-import snapshots use SQLite VACUUM INTO
+for a consistent view including committed WAL data. The file is hashed before
+validation and again immediately before the final transaction commit.

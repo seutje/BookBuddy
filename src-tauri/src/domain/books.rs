@@ -134,9 +134,11 @@ pub struct Book {
     pub updated_at: String,
     pub read_count: i64,
     pub last_read_on: Option<String>,
+    #[sqlx(rename = "has_title_verification")]
+    pub needs_title_verification: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, Default)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PersonalDraft {
     pub reading_status: Option<ReadingStatus>,
@@ -226,6 +228,7 @@ pub struct BookFilter {
     pub has_readings: Option<bool>,
     pub read_from: Option<String>,
     pub read_to: Option<String>,
+    pub needs_title_verification: Option<bool>,
 }
 
 pub fn normalized(value: &str) -> String {

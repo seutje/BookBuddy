@@ -90,6 +90,8 @@ export interface CatalogueRow {
   preserveFields: string[];
 }
 export interface BorrowRow {
+  existingLoanId: string | null;
+  existingBookId: string | null;
   source: SourceRow;
   title: string;
   author: string | null;
@@ -105,6 +107,8 @@ export interface BorrowRow {
   errors: string[];
 }
 export interface TitleReviewRow {
+  existingTaskId: string | null;
+  existingState: string | null;
   source: SourceRow;
   workingTitle: string;
   author: string | null;
@@ -143,6 +147,8 @@ export interface ImportCounts {
   momMemberships: number;
 }
 export interface ImportPreview {
+  sources: ImportSource[];
+  alreadyImportedBatchId: string | null;
   draft: ImportReviewDraft;
   sourceName: string;
   sourceHash: string;
@@ -164,7 +170,111 @@ export const importApi = {
   choose: () => invoke<ImportPreview | null>("choose_library_xlsx"),
   preview: (draft: ImportReviewDraft) =>
     invoke<ImportPreview>("preview_library_xlsx_mapping", { draft }),
+  commit: (draft: ImportReviewDraft, reviewHash: string) =>
+    invoke<ImportSummary>("commit_library_xlsx_import", { draft, reviewHash }),
+  batches: () => invoke<ImportBatch[]>("list_import_batches"),
+  rows: (batchId: string) =>
+    invoke<ImportedRow[]>("list_import_rows", { batchId }),
+  tasks: (includeResolved: boolean) =>
+    invoke<TitleTask[]>("list_title_verification_tasks", { includeResolved }),
+  resolve: (id: string, resolution: TitleResolution) =>
+    invoke<void>("resolve_title_verification", { id, resolution }),
+  loans: (bookId: string | null) =>
+    invoke<HistoricalLoan[]>("list_historical_loans", { bookId }),
+  baseline: (bookId: string) =>
+    invoke<BorrowSummary | null>("get_borrow_summary", { bookId }),
+  linkLoan: (id: string, bookId: string, expectedBookId: string | null) =>
+    invoke<void>("link_historical_loan", { id, bookId, expectedBookId }),
 };
+export interface ImportSource {
+  id: string;
+  label: string;
+  lastFilename: string;
+  carlyPersonId: string;
+  momPersonId: string | null;
+  createdAt: string;
+}
+export interface ImportSummary {
+  batchId: string;
+  originId: string;
+  alreadyImported: boolean;
+  booksAdded: number;
+  booksUpdated: number;
+  catalogueRowsSkipped: number;
+  peopleCreated: number;
+  membershipsCreated: number;
+  historicalLoansAdded: number;
+  historicalLoansReused: number;
+  unlinkedLoans: number;
+  fieldsCreated: number;
+  customValuesWritten: number;
+  titleTasksAdded: number;
+  unresolvedTitleTasks: number;
+  sourceRowsSaved: number;
+  warningCount: number;
+  backupName: string | null;
+  carlyPersonId: string;
+}
+export interface ImportBatch {
+  id: string;
+  originId: string;
+  sourceFilename: string;
+  sourceHash: string;
+  mappingVersion: number;
+  importedAt: string;
+  summaryJson: string;
+}
+export interface ImportedRow {
+  id: string;
+  sheetName: string;
+  sheetRowNumber: number;
+  rawJson: string;
+  warningJson: string;
+  bookId: string | null;
+  loanId: string | null;
+  verificationId: string | null;
+}
+export interface TitleTask {
+  id: string;
+  bookId: string | null;
+  currentTitle: string | null;
+  workingTitle: string;
+  rawPdfTitle: string | null;
+  reason: string | null;
+  proposedConfirmedTitle: string | null;
+  state: string;
+  sourceRowId: string;
+}
+export interface TitleResolution {
+  bookId: string | null;
+  confirmedTitle: string | null;
+  expectedCurrentTitle: string | null;
+  expectedState: string;
+}
+export interface HistoricalLoan {
+  id: string;
+  bookId: string | null;
+  currentTitle: string | null;
+  personId: string;
+  personName: string;
+  sourceTitle: string;
+  sourceAuthor: string | null;
+  sourceFormat: string | null;
+  publicationYear: number | null;
+  sourceDateJson: string;
+  dateInterpretation: string;
+  datePrecision: string;
+  sourcePdf: string | null;
+  importedRowId: string;
+}
+export interface BorrowSummary {
+  bookId: string;
+  importedCountBaseline: number | null;
+  firstSourceDateJson: string;
+  latestSourceDateJson: string;
+  sourceDateType: string | null;
+  linkedHistoryCount: number;
+}
 export const sheetHeaders: Record<string, readonly string[]> = {
   "Book Catalogue": [
     "Title",

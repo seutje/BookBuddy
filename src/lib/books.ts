@@ -38,6 +38,7 @@ export interface BookDraft {
   owned: boolean | null;
 }
 export interface Book extends BookDraft {
+  needsTitleVerification: boolean;
   id: string;
   createdAt: string;
   updatedAt: string;
@@ -67,6 +68,7 @@ export interface BookDetail {
 export type Filter<T> =
   { mode: "any" } | { mode: "unknown" } | { mode: "equals"; value: T };
 export interface BookFilter {
+  needsTitleVerification?: boolean | null;
   personId: string | null;
   search: string;
   readingStatus: Filter<ReadingStatus>;
