@@ -2,8 +2,15 @@ name: Publish Windows release
 
 on:
   push:
+    branches: [main]
     tags:
-      - "v[0-9]*.[0-9]*.[0-9]*"
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to build and release
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -13,8 +20,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  resolve:
+    name: Find an unpublished release tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      publish: ${{ steps.target.outputs.publish }}
+      tag: ${{ steps.target.outputs.tag }}
+      sha: ${{ steps.target.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Test release selection
+        run: node --test scripts/check-release-version.test.mjs scripts/resolve-release.test.mjs
+      - name: Resolve the existing version tag
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/resolve-release.mjs
+
   build:
     name: Check and build Windows x64 installer
+    needs: resolve
+    if: needs.resolve.outputs.publish == 'true'
     runs-on: windows-2022
     timeout-minutes: 60
     defaults:
@@ -23,6 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ needs.resolve.outputs.sha }}
           persist-credentials: false
 
       - uses: actions/setup-node@v6
@@ -32,12 +66,14 @@ jobs:
 
       - name: Verify release tag and versions
         id: version
+        env:
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
         run: |
           node --test scripts/check-release-version.test.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/check-release-version.mjs "$env:GITHUB_REF_NAME"
+          node scripts/check-release-version.mjs "$env:RELEASE_TAG"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          "version=$($env:GITHUB_REF_NAME.Substring(1))" | Add-Content -Encoding utf8 -LiteralPath $env:GITHUB_OUTPUT
+          "version=$($env:RELEASE_TAG.Substring(1))" | Add-Content -Encoding utf8 -LiteralPath $env:GITHUB_OUTPUT
 
       - name: Install Rust tooling
         run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy
@@ -76,11 +112,14 @@ jobs:
 
   publish:
     name: Publish installer to GitHub Releases
-    needs: build
+    needs: [resolve, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
+    concurrency:
+      group: publish-${{ needs.resolve.outputs.tag }}
+      cancel-in-progress: false
     steps:
       - uses: actions/download-artifact@v7
         with:
@@ -91,8 +130,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
         run: |
+          set -euo pipefail
+          # A simultaneous tag/main push may have published while this build ran.
+          status=$(gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" --jq '.draft' 2>release-lookup.log) || {
+            if ! grep -q 'HTTP 404' release-lookup.log; then cat release-lookup.log >&2; exit 1; fi
+            status=missing
+          }
+          if [ "$status" = false ]; then
+            echo "Release $RELEASE_TAG is already published; keeping its assets."
+            exit 0
+          fi
+          if [ "$status" = true ]; then
+            gh release upload "$RELEASE_TAG" release/* --repo "$GH_REPO" --clobber
+            gh release edit "$RELEASE_TAG" --repo "$GH_REPO" --draft=false
+            exit 0
+          fi
           gh release create "$RELEASE_TAG" release/* \
             --repo "$GH_REPO" \
             --verify-tag \

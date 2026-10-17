@@ -14,6 +14,16 @@ git tag v0.1.1
 git push origin v0.1.1
 ```
 
+Every push to `main` also checks whether its current package version has an
+existing, unpublished tag in the branch history. If so, it recovers a missed tag
+event automatically. The installer always builds from that tag's resolved commit;
+the recovery never moves or recreates a tag. Ordinary untagged development versions
+and already published releases skip the Windows build.
+
+To retry explicitly, open Actions → Publish Windows release → Run workflow on
+`main`, and enter the existing tag (for example `v0.1.1`). Published release assets
+are preserved; an unfinished draft can resume uploading and publishing.
+
 The Windows build job runs `npm ci` and `npm run check`, then packages with the
 Cargo lockfile enforced. Only the installer and SHA-256 sidecar pass to the
 publishing job, which creates a published GitHub Release with generated notes using the
