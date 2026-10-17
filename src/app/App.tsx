@@ -9,6 +9,7 @@ import { Settings } from "../features/settings/Settings";
 import { Activity } from "../features/activity/Activity";
 import { ImportWizard } from "../features/import/ImportWizard";
 import type { ImportSummary } from "../lib/import";
+import { backupsApi } from "../lib/backups";
 
 const pages = ["Library", "Activity", "People", "Settings"] as const;
 type Page = (typeof pages)[number];
@@ -21,6 +22,12 @@ type Action =
 export function App() {
   const [page, setPage] = useState<Page>("Library");
   const queryClient = useQueryClient();
+  const restored = useQuery<string | null>({
+    queryKey: ["restored"],
+    queryFn: () => Promise.resolve(null),
+    initialData: null,
+    enabled: false,
+  });
   const startup = useQuery({ queryKey: ["startup"], queryFn: api.startup });
   const household = useQuery({
     queryKey: ["household"],
@@ -57,6 +64,25 @@ export function App() {
   );
   const ready = startup.data?.ready && household.data;
   const startupError = startup.error || startup.data?.error || household.error;
+
+  if (restored.data)
+    return (
+      <main>
+        <h1>Restore complete</h1>
+        <p>
+          Your backup replaced the library successfully. Close and reopen
+          BookBuddy to use the restored data.
+        </p>
+        <p>Recovery backup saved in the local backup folder: {restored.data}</p>
+        <button
+          onClick={() => {
+            void backupsApi.close().catch(() => {});
+          }}
+        >
+          Close BookBuddy
+        </button>
+      </main>
+    );
 
   return (
     <div className="shell">

@@ -82,3 +82,7 @@ services are present. People in a household are labels, not private accounts.
 provenance history, title queue, exact reimport and offline restart with the same
 public synthetic fixture. The private commit/repeat aggregate test is opt-in:
 `cargo test --manifest-path src-tauri/Cargo.toml --all-features --test xlsx_commit private_sample_commit -- --ignored`.
+
+See [backup and recovery instructions](docs/backup-restore.md).
+`scripts/smoke-backups.ps1` verifies native export, explicit replacement restore,
+recovery backup, offline restart and backup retention settings in an isolated library.

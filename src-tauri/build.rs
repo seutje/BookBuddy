@@ -1,6 +1,13 @@
 fn main() {
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
         tauri_build::AppManifest::new().commands(&[
+            "backup_status",
+            "update_backup_settings",
+            "export_library_backup",
+            "choose_library_backup",
+            "refresh_restore_preview",
+            "confirm_library_restore",
+            "close_after_restore",
             "startup_status",
             "list_people",
             "create_person",

@@ -1,4 +1,5 @@
 //! Household operations and transaction orchestration.
+pub mod backups;
 pub mod books;
 pub mod custom_fields;
 pub mod household;

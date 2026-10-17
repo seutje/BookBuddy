@@ -17,7 +17,7 @@ pub async fn snapshot(
     }
     std::fs::create_dir_all(directory).map_err(|_| {
         AppError::validation(
-            "The local recovery-backup folder could not be created. No import was committed.",
+            "The local recovery-backup folder could not be created. Check folder access and free disk space.",
         )
     })?;
     let destination = directory.join(format!("{purpose}-{}.sqlite3", uuid::Uuid::new_v4()));

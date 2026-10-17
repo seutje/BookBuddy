@@ -1,11 +1,13 @@
 import { FieldManager } from "../custom-fields/FieldManager";
 import { ImportWizard } from "../import/ImportWizard";
 import { ImportHistory } from "../import/ImportHistory";
+import { BackupPanel } from "./BackupPanel";
 
 export function Settings({ dataDirectory }: { dataDirectory: string | null }) {
   return (
     <section>
       <h1>Settings</h1>
+      <BackupPanel />
       <FieldManager />
       <ImportWizard />
       <ImportHistory />

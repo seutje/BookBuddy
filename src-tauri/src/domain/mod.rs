@@ -1,4 +1,5 @@
 //! Domain types and validation, independent of the presentation layer.
+pub mod backups;
 pub mod books;
 pub mod custom_fields;
 pub mod import;

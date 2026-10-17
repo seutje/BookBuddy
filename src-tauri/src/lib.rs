@@ -17,10 +17,26 @@ pub fn run() {
             let directory = app.path().app_local_data_dir().ok().and_then(|path| {
                 services::data_directory(path, cfg!(debug_assertions), test_run.as_deref()).ok()
             });
+            let directory_lock = directory
+                .as_ref()
+                .and_then(|path| persistence::lock_directory(path).ok());
             let pool = directory
                 .as_ref()
+                .filter(|_| directory_lock.is_some())
                 .and_then(|path| tauri::async_runtime::block_on(persistence::open(path)).ok());
+            let automatic_problem = match (&pool, &directory) {
+                (Some(pool), Some(directory)) => tauri::async_runtime::block_on(
+                    services::backups::automatic(pool, directory, false),
+                )
+                .is_err(),
+                _ => false,
+            };
             app.manage(commands::AppState {
+                operations: tokio::sync::RwLock::new(()),
+                restored: std::sync::atomic::AtomicBool::new(false),
+                automatic_problem: std::sync::atomic::AtomicBool::new(automatic_problem),
+                restore_selection: tokio::sync::Mutex::new(None),
+                directory_lock,
                 pool,
                 data_path: directory.clone(),
                 data_directory: directory.map(|path| path.to_string_lossy().into_owned()),
@@ -29,6 +45,13 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::backups::backup_status,
+            commands::backups::update_backup_settings,
+            commands::backups::export_library_backup,
+            commands::backups::choose_library_backup,
+            commands::backups::refresh_restore_preview,
+            commands::backups::confirm_library_restore,
+            commands::backups::close_after_restore,
             commands::startup_status,
             commands::list_people,
             commands::create_person,

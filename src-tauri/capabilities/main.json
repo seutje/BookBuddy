@@ -40,6 +40,13 @@
     "allow-resolve-title-verification",
     "allow-list-historical-loans",
     "allow-get-borrow-summary",
-    "allow-link-historical-loan"
+    "allow-link-historical-loan",
+    "allow-backup-status",
+    "allow-update-backup-settings",
+    "allow-export-library-backup",
+    "allow-choose-library-backup",
+    "allow-refresh-restore-preview",
+    "allow-confirm-library-restore",
+    "allow-close-after-restore"
   ]
 }

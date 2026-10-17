@@ -1,6 +1,6 @@
 # BookBuddy — Implementation Plan
 
-**Status:** Phases 0-6 verified; Phase 7 next
+**Status:** Phases 0-7 verified; Phase 8 next
 **Target:** Offline-only Windows desktop (Rust + Tauri 2 + React + TypeScript + SQLite)  
 **Source of truth:** [DESIGN.md](DESIGN.md)  
 **Agent rules:** [AGENTS.md](AGENTS.md)
@@ -112,13 +112,15 @@ Phase 6 verification (2026-10-17): `npm run check` passed with forty-one regular
 
 ## Phase 7 — Backups, restores and data safety
 
-- [ ] Define versioned portable backup format containing all SQLite records and optional local cover assets with a manifest/schema version.
-- [ ] Implement consistent snapshot/export (SQLite backup API or equivalent), not unsafe copying of live WAL files.
-- [ ] Implement restore validation and preview; MVP restore may replace the dataset but must clearly say so.
-- [ ] Create pre-restore backup and transactional/atomic recovery procedure; test interruptions and invalid archives.
-- [ ] Add a modest configurable local backup rotation, manual export, visible app-data location and offline recovery instructions.
-- [ ] Test export/restore round trip for books, people, custom values, histories, provenance and verification tasks.
-- [ ] **Exit gate:** user can recover the complete library from a locally saved backup.
+- [x] Define versioned portable backup format containing all SQLite records and optional local cover assets with a manifest/schema version.
+- [x] Implement consistent snapshot/export (SQLite backup API or equivalent), not unsafe copying of live WAL files.
+- [x] Implement restore validation and preview; MVP restore may replace the dataset but must clearly say so.
+- [x] Create pre-restore backup and transactional/atomic recovery procedure; test interruptions and invalid archives.
+- [x] Add a modest configurable local backup rotation, manual export, visible app-data location and offline recovery instructions.
+- [x] Test export/restore round trip for books, people, custom values, histories, provenance and verification tasks.
+- [x] **Exit gate:** user can recover the complete library from a locally saved backup.
+
+Phase 7 verification (2026-10-17): `npm run check` passed with forty-seven regular Rust tests. Six backup tests verify every relevant table through export/restore, committed WAL data, read-only previews, older-schema staging upgrades, stale state/file checks, checksum/application/schema/foreign-key rejection, incomplete replacement rollback, abrupt subprocess termination recovery, exclusive directory access and automatic retention preserving recovery/manual files. `scripts/smoke-backups.ps1` passed on Windows offline: native export/restore pickers, replacement counts and confirmation, pre-restore archive, restart, preserved personal notes and retention settings. ADR 0006 and `docs/backup-restore.md` document the format, atomic SQLite strategy and recovery procedure. Cover attachments are not offered in this MVP; archives with cover references are explicitly rejected.
 
 ## Phase 8 — Usability, hardening and Windows distribution
 
