@@ -4,6 +4,7 @@ import { api, errorMessage } from "../lib/api";
 import { PersonForm } from "../components/PersonForm";
 import { PersonPicker } from "../components/PersonPicker";
 import { People } from "../features/people/People";
+import { Library } from "../features/library/Library";
 
 const pages = ["Library", "Activity", "People", "Settings"] as const;
 type Page = (typeof pages)[number];
@@ -136,18 +137,7 @@ export function App() {
                     ? `Viewing ${current.displayName}’s library`
                     : "Viewing everyone in the household"}
                 </p>
-                {page === "Library" && (
-                  <section>
-                    <h1>Library</h1>
-                    <div className="empty">
-                      <h2>Your library starts here</h2>
-                      <p>
-                        Keep your books together, with separate reading
-                        information for each person.
-                      </p>
-                    </div>
-                  </section>
-                )}
+                {page === "Library" && <Library current={current} />}
                 {page === "Activity" && (
                   <section>
                     <h1>Activity</h1>

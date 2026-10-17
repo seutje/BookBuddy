@@ -1,4 +1,5 @@
 //! Household operations and transaction orchestration.
+pub mod books;
 pub mod household;
 
 /// Test runs may select a UUID leaf only within the isolated debug data folder.

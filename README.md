@@ -46,6 +46,12 @@ before testing bundled assets.
 `powershell -File scripts/smoke-people.ps1` exercises first-run creation, switching,
 rename, archival, Everyone, restarts, and the safe startup error screen through
 Windows UI Automation and real IPC, using fresh debug smoke databases.
+`powershell -File scripts/smoke-books.ps1` checks title-only add, shared metadata,
+person-specific notes, Mark read, searching, assignment and restart isolation.
+
+Library text matching ignores case and repeated whitespace, retains accents and
+punctuation, and treats search text literally. Everyone searches notes across the
+household; a person's view searches that person's notes and shared metadata.
 
 ## Local data and privacy
 

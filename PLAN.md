@@ -1,6 +1,6 @@
 # BookBuddy — Implementation Plan
 
-**Status:** Phases 0–1 verified; Phase 2 next
+**Status:** Phases 0–2 verified; Phase 3 next
 **Target:** Offline-only Windows desktop (Rust + Tauri 2 + React + TypeScript + SQLite)  
 **Source of truth:** [DESIGN.md](DESIGN.md)  
 **Agent rules:** [AGENTS.md](AGENTS.md)
@@ -40,14 +40,16 @@ Phase 1 verification (2026-10-17): `npm run check` passed, including nine Rust t
 
 ## Phase 2 — Catalog and person-specific libraries
 
-- [ ] Implement book create/edit with title required, optional bibliographic fields, durable ID and safe duplicate hints.
-- [ ] Implement person-book association with `UNIQUE(person_id,book_id)` and independent reading status, categorical rating, list status and notes.
-- [ ] Implement shared ownership separately from personal library/wishlist/borrowed state; ensure unknown is distinct from false.
-- [ ] Build Library search, filter, sort, row view, quick-add and fast `Mark read` action; add clear person-context labels.
-- [ ] Build shared Book Detail and per-person panels without accidental cross-person overwrites.
-- [ ] Support same book in multiple people's libraries without duplicating the underlying book record.
-- [ ] Test one shared book with conflicting ratings and reading statuses; ambiguous titles and absent ISBN; same-person uniqueness.
-- [ ] **Exit gate:** title-only add, browse, update, switch member and reopen all work with correct scope.
+- [x] Implement book create/edit with title required, optional bibliographic fields, durable ID and safe duplicate hints.
+- [x] Implement person-book association with `UNIQUE(person_id,book_id)` and independent reading status, categorical rating, list status and notes.
+- [x] Implement shared ownership separately from personal library/wishlist/borrowed state; ensure unknown is distinct from false.
+- [x] Build Library search, filter, sort, row view, quick-add and fast `Mark read` action; add clear person-context labels.
+- [x] Build shared Book Detail and per-person panels without accidental cross-person overwrites.
+- [x] Support same book in multiple people's libraries without duplicating the underlying book record.
+- [x] Test one shared book with conflicting ratings and reading statuses; ambiguous titles and absent ISBN; same-person uniqueness.
+- [x] **Exit gate:** title-only add, browse, update, switch member and reopen all work with correct scope.
+
+Phase 2 verification (2026-10-17): `npm run check` passed, including fourteen Rust tests. New coverage includes independent ratings/status/notes, title-only duplicates and ISBN hints without merging, transactional failed assignment, archived write rejection, Unicode case-insensitive scoped search, combined same-membership filters, three-valued ownership and categorical sorting. `scripts/smoke-books.ps1` passed on Windows with external WebView requests blocked: title-only add, personal notes, Mark read preserving notes, shared edits, search, assignment to a second person, context switching and restart. Search semantics are recorded in ADR 0008.
 
 ## Phase 3 — Extensible attributes (required foundation)
 

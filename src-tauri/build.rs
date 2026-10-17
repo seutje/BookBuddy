@@ -7,6 +7,14 @@ fn main() {
             "rename_person",
             "archive_person",
             "select_person",
+            "list_books",
+            "get_book",
+            "create_book",
+            "update_book",
+            "ensure_person_book",
+            "update_person_book",
+            "mark_read",
+            "duplicate_book_hints",
         ]),
     ))
     .expect("Tauri build configuration failed");

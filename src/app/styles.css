@@ -1,6 +1,109 @@
 @import "tailwindcss/theme";
 @import "tailwindcss/utilities";
 
+textarea {
+  font: inherit;
+  width: 100%;
+  min-height: 100px;
+  display: block;
+  padding: 8px;
+  margin-top: 6px;
+  border: 1px solid #8b9d90;
+  border-radius: 4px;
+}
+.heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.book-form > label,
+.book-form > details,
+.book-form > button {
+  margin: 18px 0;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin: 18px 0;
+}
+summary {
+  cursor: pointer;
+  padding: 8px 0;
+  font-weight: 600;
+}
+.filters {
+  margin-top: 16px;
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.checkbox input {
+  width: auto;
+  margin: 0;
+}
+.book-list {
+  padding: 0;
+  list-style: none;
+}
+.book-list > li {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid #d3dbd0;
+}
+.book-list p {
+  margin: 6px 0;
+}
+button.book-title {
+  border: 0;
+  background: transparent;
+  color: #183f32;
+  padding: 0;
+  font-weight: 650;
+  text-align: left;
+  font-size: 18px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.membership-list {
+  list-style: none;
+  padding: 0;
+  font-size: 14px;
+}
+.notice {
+  border-left: 4px solid #ae7825;
+  padding: 4px 16px;
+  background: #fbf1dc;
+  margin: 16px 0;
+}
+.metadata {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+.metadata dt {
+  font-size: 13px;
+  color: #526358;
+}
+.metadata dd {
+  margin: 4px 0;
+}
+.personal-panel {
+  border-top: 1px solid #d3dbd0;
+  margin-top: 32px;
+  padding-top: 20px;
+}
+.preserve-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 :root {
   font-family: "Segoe UI", sans-serif;
   color: #203c30;

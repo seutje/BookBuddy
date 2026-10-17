@@ -31,7 +31,15 @@ pub fn run() {
             commands::create_person,
             commands::rename_person,
             commands::archive_person,
-            commands::select_person
+            commands::select_person,
+            commands::books::list_books,
+            commands::books::get_book,
+            commands::books::create_book,
+            commands::books::update_book,
+            commands::books::ensure_person_book,
+            commands::books::update_person_book,
+            commands::books::mark_read,
+            commands::books::duplicate_book_hints
         ])
         .build(tauri::generate_context!())
         .expect("BookBuddy could not start; existing data has been preserved")

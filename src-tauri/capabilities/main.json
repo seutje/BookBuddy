@@ -9,6 +9,14 @@
     "allow-create-person",
     "allow-rename-person",
     "allow-archive-person",
-    "allow-select-person"
+    "allow-select-person",
+    "allow-list-books",
+    "allow-get-book",
+    "allow-create-book",
+    "allow-update-book",
+    "allow-ensure-person-book",
+    "allow-update-person-book",
+    "allow-mark-read",
+    "allow-duplicate-book-hints"
   ]
 }

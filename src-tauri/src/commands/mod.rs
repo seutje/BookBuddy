@@ -1,4 +1,5 @@
 //! Narrow typed IPC adapters. No generic SQL or filesystem commands.
+pub mod books;
 use crate::{
     domain::{AppError, Household},
     services::household,
