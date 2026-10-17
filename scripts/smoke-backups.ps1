@@ -43,6 +43,7 @@ try {
     $null = Wait-Element '1 book'
     Click 'Synthetic backup book'
     Assert-Text "Smoke Reader Alpha's notes" 'A synthetic note retained through restore'
+    $null = Wait-Element ("Household: 1 logged readings " + [char]0xB7 + " Last reading: " + [DateTime]::Now.ToString('yyyy-MM-dd'))
     Click 'Settings'
     $spinner = Wait-Element 'Automatic backups to keep' ([System.Windows.Automation.ControlType]::Spinner)
     $spinner.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue('2')

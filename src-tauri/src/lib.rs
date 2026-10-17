@@ -15,7 +15,13 @@ pub fn run() {
                 None
             };
             let directory = app.path().app_local_data_dir().ok().and_then(|path| {
-                services::data_directory(path, cfg!(debug_assertions), test_run.as_deref()).ok()
+                services::launch_directory(
+                    path,
+                    cfg!(debug_assertions),
+                    test_run.as_deref(),
+                    &std::env::args().collect::<Vec<_>>(),
+                )
+                .ok()
             });
             let directory_lock = directory
                 .as_ref()

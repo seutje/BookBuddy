@@ -69,8 +69,16 @@ function Assert-Pressed([string]$Name) {
     $element = Wait-Element $Name ([System.Windows.Automation.ControlType]::Button)
     if ($element.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Current.ToggleState -ne [System.Windows.Automation.ToggleState]::On) { throw "Expected selection is not active: $Name" }
 }
+if ($env:BOOKBUDDY_SMOKE_EXECUTABLE) { $executable = (Resolve-Path -LiteralPath $env:BOOKBUDDY_SMOKE_EXECUTABLE).Path }
+function Get-SmokeDataDirectory {
+    $base = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'local.bookbuddy.desktop'
+    if ($env:BOOKBUDDY_SMOKE_INSTALLED -eq '1') { return Join-Path $base "acceptance/$env:BOOKBUDDY_TEST_RUN" }
+    return Join-Path $base "development/smoke/$env:BOOKBUDDY_TEST_RUN"
+}
 function Open-App {
-    $script:application = Start-Process -FilePath $executable -WindowStyle Hidden -PassThru
+    if ($env:BOOKBUDDY_SMOKE_INSTALLED -eq '1') {
+        $script:application = Start-Process -FilePath $executable -ArgumentList "--acceptance-run=$env:BOOKBUDDY_TEST_RUN" -WindowStyle Hidden -PassThru
+    } else { $script:application = Start-Process -FilePath $executable -WindowStyle Hidden -PassThru }
 }
 
 function Close-App {

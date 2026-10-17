@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { usePage } from "../../lib/pagination";
+import { Pagination } from "../../components/Pagination";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { readingsApi } from "../../lib/readings";
 import type {
@@ -46,14 +48,16 @@ export function ReadingHistory({
       setDeleting(null);
     },
   });
-  const recent =
-    query.data
-      ?.filter(
-        (event, index, events) =>
-          events.findIndex((candidate) => candidate.bookId === event.bookId) ===
-          index,
-      )
-      .slice(0, 6) ?? [];
+  const page = usePage(query.data ?? [], JSON.stringify(filter));
+  const recent: ReadingEvent[] = [];
+  const seen = new Set<string>();
+  for (const event of query.data ?? []) {
+    if (!seen.has(event.bookId)) {
+      recent.push(event);
+      seen.add(event.bookId);
+    }
+    if (recent.length === 6) break;
+  }
   return (
     <section aria-label="Reading history">
       {query.error && <p role="alert">{errorMessage(query.error)}</p>}
@@ -141,7 +145,7 @@ export function ReadingHistory({
         <>
           <p role="status">{`${query.data?.length ?? 0} reading events`}</p>
           <ol className="reading-list">
-            {query.data?.map((event, index) => (
+            {page.items.map((event, index) => (
               <li key={event.id}>
                 <div className="heading-row">
                   <div>
@@ -163,7 +167,7 @@ export function ReadingHistory({
                     <button
                       className="quiet"
                       disabled={action.isPending}
-                      aria-label={`Edit reading ${index + 1}`}
+                      aria-label={`Edit reading ${page.offset + index + 1}`}
                       onClick={() => {
                         setEditing(event);
                         setDeleting(null);
@@ -175,7 +179,7 @@ export function ReadingHistory({
                     <button
                       className="quiet"
                       disabled={action.isPending}
-                      aria-label={`Delete reading ${index + 1}`}
+                      aria-label={`Delete reading ${page.offset + index + 1}`}
                       onClick={() => {
                         setDeleting(event);
                         setEditing(null);
@@ -190,6 +194,7 @@ export function ReadingHistory({
               </li>
             ))}
           </ol>
+          <Pagination label="readings" page={page} />
         </>
       )}
     </section>

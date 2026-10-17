@@ -70,7 +70,12 @@ export function BookDetail({
   );
   return (
     <section>
-      <button className="quiet" disabled={action.isPending} onClick={onBack}>
+      <button
+        autoFocus
+        className="quiet"
+        disabled={action.isPending}
+        onClick={onBack}
+      >
         Back to Library
       </button>
       {query.error && <p role="alert">{errorMessage(query.error)}</p>}

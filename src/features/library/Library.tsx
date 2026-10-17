@@ -13,6 +13,8 @@ import { errorMessage } from "../../lib/api";
 import { BookForm } from "../books/BookForm";
 import { BookDetail } from "../books/BookDetail";
 import { CustomFilters } from "../custom-fields/CustomFilters";
+import { usePage } from "../../lib/pagination";
+import { Pagination } from "../../components/Pagination";
 
 function FilterSelect<T extends string>({
   label,
@@ -73,6 +75,7 @@ export function Library({ current }: { current: Person | undefined }) {
     queryKey: ["books", request],
     queryFn: () => booksApi.list(request),
   });
+  const page = usePage(query.data ?? [], JSON.stringify(request));
   const action = useMutation({
     mutationFn: async (
       action:
@@ -330,7 +333,7 @@ export function Library({ current }: { current: Person | undefined }) {
                 {`${query.data.length} ${query.data.length === 1 ? "book" : "books"}`}
               </p>
               <ul className="book-list">
-                {query.data.map(({ book, memberships, rowFields }) => (
+                {page.items.map(({ book, memberships, rowFields }) => (
                   <li key={book.id}>
                     <div>
                       <button
@@ -397,6 +400,7 @@ export function Library({ current }: { current: Person | undefined }) {
                   </li>
                 ))}
               </ul>
+              <Pagination label="books" page={page} />
             </>
           )}
         </>

@@ -51,6 +51,7 @@ function FormBody({
       <label>
         Reading book
         <select
+          autoFocus={!props.initial && !props.bookId}
           required
           value={draft.bookId}
           disabled={props.pending || !!props.initial || !!props.bookId}
@@ -70,6 +71,7 @@ function FormBody({
         Reading date
         <input
           type="date"
+          autoFocus={!!props.initial || !!props.bookId}
           required
           max={today}
           value={draft.occurredOn}

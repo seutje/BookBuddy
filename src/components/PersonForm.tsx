@@ -36,6 +36,7 @@ export function PersonForm({
       <label>
         Display name
         <input
+          autoFocus
           value={name}
           onChange={(event) => setName(event.target.value)}
           maxLength={100}

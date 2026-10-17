@@ -109,6 +109,9 @@ export function App() {
               onClick={() => {
                 setPage(destination);
                 action.reset();
+                requestAnimationFrame(() =>
+                  document.getElementById("main")?.focus(),
+                );
               }}
             >
               {destination}
@@ -159,6 +162,11 @@ export function App() {
                 <p>
                   A place for your books and the people who read them. Start
                   with one person's name.
+                </p>
+                <p>
+                  Add a title, then track each person's reading separately. Use
+                  Log read today for repeated or shared sessions, and Settings
+                  for custom attributes, local backups and help.
                 </p>
                 <PersonForm
                   pending={action.isPending}

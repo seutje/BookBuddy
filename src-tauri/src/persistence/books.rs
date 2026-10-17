@@ -4,7 +4,7 @@ use sqlx::{QueryBuilder, Sqlite, SqlitePool, Transaction};
 use std::collections::HashMap;
 
 const BOOK_PROJECTION: &str = "SELECT b.*, (SELECT COUNT(*) FROM reading_event e WHERE e.book_id = b.id) AS read_count, (SELECT MAX(e.occurred_on) FROM reading_event e WHERE e.book_id = b.id) AS last_read_on, (b.needs_title_verification = 1 OR EXISTS (SELECT 1 FROM book_title_verification t WHERE t.book_id = b.id AND t.state = 'open')) AS has_title_verification FROM book b";
-const MEMBERSHIP_PROJECTION: &str = "SELECT pb.*, p.display_name AS person_name, p.archived_at, (SELECT COUNT(*) FROM reading_event e JOIN reading_event_participant ep ON ep.event_id = e.id WHERE e.book_id = pb.book_id AND ep.person_id = pb.person_id) AS read_count, (SELECT MAX(e.occurred_on) FROM reading_event e JOIN reading_event_participant ep ON ep.event_id = e.id WHERE e.book_id = pb.book_id AND ep.person_id = pb.person_id) AS last_read_on FROM person_book pb JOIN person p ON p.id = pb.person_id WHERE (? IS NULL OR pb.book_id = ?) ORDER BY p.created_at, p.id";
+const MEMBERSHIP_PROJECTION: &str = "WITH reading_stats AS (SELECT e.book_id, ep.person_id, COUNT(*) AS read_count, MAX(e.occurred_on) AS last_read_on FROM reading_event e JOIN reading_event_participant ep ON ep.event_id = e.id GROUP BY e.book_id, ep.person_id) SELECT pb.*, p.display_name AS person_name, p.archived_at, COALESCE(rs.read_count, 0) AS read_count, rs.last_read_on FROM person_book pb JOIN person p ON p.id = pb.person_id LEFT JOIN reading_stats rs ON rs.book_id = pb.book_id AND rs.person_id = pb.person_id WHERE (? IS NULL OR pb.book_id = ?) ORDER BY p.created_at, p.id";
 
 pub async fn all(pool: &SqlitePool) -> Result<Vec<BookDetail>, AppError> {
     filtered(pool, &BookFilter::default()).await

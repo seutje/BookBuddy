@@ -25,7 +25,15 @@ export function PersonPicker({ people, currentId, pending, onSelect }: Props) {
     }
   }
   return (
-    <div className="person-picker">
+    <div
+      className="person-picker"
+      onKeyDown={(event) => {
+        if (open && event.key === "Escape") {
+          event.preventDefault();
+          close();
+        }
+      }}
+    >
       <span>Viewing</span>
       <button
         ref={trigger}

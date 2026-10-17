@@ -1,6 +1,6 @@
 # BookBuddy — Implementation Plan
 
-**Status:** Phases 0-7 verified; Phase 8 next
+**Status:** Phases 0-8 verified; offline Windows MVP complete (0.1.1)
 **Target:** Offline-only Windows desktop (Rust + Tauri 2 + React + TypeScript + SQLite)  
 **Source of truth:** [DESIGN.md](DESIGN.md)  
 **Agent rules:** [AGENTS.md](AGENTS.md)
@@ -124,14 +124,16 @@ Phase 7 verification (2026-10-17): `npm run check` passed with forty-seven regul
 
 ## Phase 8 — Usability, hardening and Windows distribution
 
-- [ ] Perform keyboard-only walkthrough of Library, People, Activity, custom-field editor and import wizard; fix focus/labels/contrast.
-- [ ] Add useful loading/empty/error states, actionable validation messages and compact toddler-friendly quick actions.
-- [ ] Test security boundaries: narrow Tauri capabilities, no generic SQL IPC, no execution of imported HTML, safe path/file handling.
-- [ ] Profile local search/filter with several thousand books/events and optimize only evidenced hotspots.
-- [ ] Write first-run help, library-import guide, backup/restore guide and data-privacy explanation.
-- [ ] Package and smoke-test an installable Windows release; verify app data survives reinstall/upgrade.
-- [ ] Run final offline acceptance suite covering core flows, import/reimport, reading history and backup/restore.
-- [ ] **Exit gate / MVP:** every outcome in DESIGN §13 and §18 is demonstrably working on Windows without accounts or cloud.
+- [x] Perform keyboard-only walkthrough of Library, People, Activity, custom-field editor and import wizard; fix focus/labels/contrast.
+- [x] Add useful loading/empty/error states, actionable validation messages and compact toddler-friendly quick actions.
+- [x] Test security boundaries: narrow Tauri capabilities, no generic SQL IPC, no execution of imported HTML, safe path/file handling.
+- [x] Profile local search/filter with several thousand books/events and optimize only evidenced hotspots.
+- [x] Write first-run help, library-import guide, backup/restore guide and data-privacy explanation.
+- [x] Package and smoke-test an installable Windows release; verify app data survives reinstall/upgrade.
+- [x] Run final offline acceptance suite covering core flows, import/reimport, reading history and backup/restore.
+- [x] **Exit gate / MVP:** every outcome in DESIGN §13 and §18 is demonstrably working on Windows without accounts or cloud.
+
+Phase 8 verification (2026-10-17): `npm run check` passed: Prettier, ESLint, strict TypeScript, production frontend build, Rust fmt, Clippy all targets/features and fifty regular Rust tests. Six opt-in/helper tests remain excluded by default; private preview/commit aggregates and synthetic fixture emitters were run explicitly. Security boundary tests and invalid-ID/literal-string tests passed. The 5,000-book/20,000-reading opt-in profile identified and removed repeated membership/event scans; debug medians were about 122-155 ms for book operations and 219 ms for 20,000 activity entries. Source-bounded styles keep documentation/fixtures out of production utility scanning. Native Windows x64 NSIS builds succeeded for 0.1.0 and 0.1.1; fresh installation, actual 0.1.0-to-0.1.1 upgrade and same-version reinstall preserved a UUID-isolated release dataset. The final installed 0.1.1 artifact passed `scripts/smoke-keyboard.ps1` with actual keys and foreground ownership checks, then `scripts/offline-acceptance.ps1 -SkipKeyboard` passed all eight remaining UI Automation scripts, including 1,001-record pagination and backup/restored reading-count checks. External WebView requests were blocked throughout. Windows version: 10.0.26200.0 (x64), existing WebView2 Runtime. Guides and verification details are in `docs/`. No household database was opened by acceptance tests. The installer is unsigned and requires an existing WebView2 Runtime; optional covers and deferred online features are not implemented.
 
 ## Deferred ideas (not MVP checkboxes)
 

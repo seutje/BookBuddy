@@ -86,3 +86,10 @@ public synthetic fixture. The private commit/repeat aggregate test is opt-in:
 See [backup and recovery instructions](docs/backup-restore.md).
 `scripts/smoke-backups.ps1` verifies native export, explicit replacement restore,
 recovery backup, offline restart and backup retention settings in an isolated library.
+
+## Using and distributing the app
+
+Start with [the user guide](docs/getting-started.md), [XLSX import](docs/library-import.md),
+[backup/recovery](docs/backup-restore.md) and [local privacy](docs/privacy.md).
+See [Windows packaging and acceptance](docs/windows-release.md) and the
+[verification record](docs/verification.md). The current release is 0.1.1.

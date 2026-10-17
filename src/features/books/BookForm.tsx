@@ -89,6 +89,7 @@ export function BookForm({
         <input
           required
           maxLength={1000}
+          autoFocus
           value={draft.title}
           disabled={pending}
           onChange={(event) =>

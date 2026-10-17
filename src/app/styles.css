@@ -1,5 +1,6 @@
 @import "tailwindcss/theme";
-@import "tailwindcss/utilities";
+@import "tailwindcss/utilities" source(none);
+@source "../";
 
 .plain-fieldset {
   border: 0;

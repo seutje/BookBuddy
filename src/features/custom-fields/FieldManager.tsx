@@ -48,6 +48,7 @@ function DefinitionEditor({
     return (
       <label className="checkbox">
         <input
+          autoFocus
           type="checkbox"
           checked={draft[key]}
           disabled={pending}

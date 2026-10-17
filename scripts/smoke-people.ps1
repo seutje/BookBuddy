@@ -49,7 +49,7 @@ try {
 
     # A deliberately invalid file is created only in another fresh smoke folder.
     $env:BOOKBUDDY_TEST_RUN = [Guid]::NewGuid().ToString()
-    $corruptDirectory = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) "local.bookbuddy.desktop/development/smoke/$env:BOOKBUDDY_TEST_RUN"
+    $corruptDirectory = Get-SmokeDataDirectory
     if (Test-Path -LiteralPath $corruptDirectory) { throw 'Refusing to reuse an existing corruption-test folder.' }
     New-Item -ItemType Directory -Path $corruptDirectory | Out-Null
     $corruptFile = Join-Path $corruptDirectory 'bookbuddy.sqlite3'

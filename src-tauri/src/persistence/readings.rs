@@ -1,5 +1,6 @@
 use crate::domain::{readings::*, AppError};
 use sqlx::{Sqlite, SqlitePool, Transaction};
+use std::collections::HashMap;
 
 pub async fn list(
     pool: &SqlitePool,
@@ -8,8 +9,17 @@ pub async fn list(
     let mut transaction = pool.begin().await?;
     let mut events = sqlx::query_as::<_, ReadingEvent>("SELECT e.*, b.title FROM reading_event e JOIN book b ON b.id = e.book_id WHERE (? IS NULL OR e.book_id = ?) AND (? IS NULL OR e.occurred_on >= ?) AND (? IS NULL OR e.occurred_on <= ?) AND (? IS NULL OR EXISTS (SELECT 1 FROM reading_event_participant ep WHERE ep.event_id = e.id AND ep.person_id = ?)) ORDER BY e.occurred_on DESC, e.created_at DESC, e.id")
         .bind(&filter.book_id).bind(&filter.book_id).bind(&filter.from).bind(&filter.from).bind(&filter.to).bind(&filter.to).bind(&filter.person_id).bind(&filter.person_id).fetch_all(&mut *transaction).await?;
+    let links: Vec<(String, String, String, Option<String>)> = sqlx::query_as("SELECT ep.event_id, p.id, p.display_name, p.archived_at FROM reading_event_participant ep JOIN person p ON p.id = ep.person_id ORDER BY p.created_at, p.id").fetch_all(&mut *transaction).await?;
+    let mut grouped: HashMap<String, Vec<Participant>> = HashMap::new();
+    for (event_id, person_id, display_name, archived_at) in links {
+        grouped.entry(event_id).or_default().push(Participant {
+            person_id,
+            display_name,
+            archived_at,
+        });
+    }
     for event in &mut events {
-        event.participants = participants(&mut transaction, &event.id).await?;
+        event.participants = grouped.remove(&event.id).unwrap_or_default();
     }
     transaction.commit().await?;
     Ok(events)
